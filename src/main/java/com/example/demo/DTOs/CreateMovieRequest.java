@@ -2,16 +2,15 @@ package com.example.demo.DTOs;
 
 import jakarta.validation.constraints.*;
 
-
 public class CreateMovieRequest {
     @NotBlank(message = "Name is required")
-    @Size(min = 3, max = 100, message =
-            "Name must be between 3 and 100 char long")
+    @Size(min = 3, max = 100, message = "Name must be between 3 and 100 char long")
     private String title;
 
     @NotBlank(message = "Release Year is required")
     private int releaseYear;
 
+    @Size(max = 100, message = "Director name must be less than 100 characters")
     private String director;
 
     public String getTitle() {

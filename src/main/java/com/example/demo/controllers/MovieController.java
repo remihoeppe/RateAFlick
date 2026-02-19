@@ -21,8 +21,6 @@ public class MovieController {
         return ResponseEntity.ok(movieService.findMovieById(id));
     }
 
-    // @GetMapping
-
     @PostMapping
     public ResponseEntity<Movie> createMovie(@RequestBody CreateMovieRequest newMovie) {
         Movie createdMovie = movieService.createMovie(newMovie);

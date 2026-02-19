@@ -9,15 +9,9 @@ public class Rating {
     private Long id;
     private int score;
 
-//    Rating -> User
-//    Many ratings for one user
-
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-
-    // Rating -> Movie
-    //    Many Ratings -> One Movie
 
     @ManyToOne
     @JoinColumn(name = "movie_id")

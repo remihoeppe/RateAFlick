@@ -14,15 +14,8 @@ public class User {
     private String name;
     private String email;
 
-    // User -> Rating
-    // One User -> Many Ratings
-
     @OneToMany(mappedBy = "user")
     private List<Rating> ratings;
-
-//    Getters and setters
-    // Lombok @Getter @Setter
-
 
     public Long getId() {
         return id;
