@@ -130,8 +130,15 @@ The application includes a database seeder that automatically populates the data
 
 - Create 8 sample users with various names and emails
 - Create 15 sample movies from different genres and languages
+- Create ~35 sample ratings linking users to movies with diverse scores (7-10)
 - Only run if the database is empty (won't duplicate existing data)
 - Automatically disabled in production profile
+
+**Rating Seeder Details:**
+- Creates ratings for various user-movie combinations
+- Scores range from 7 to 10 (realistic rating distribution)
+- Respects the unique constraint (one rating per user per movie)
+- Only seeds if users and movies already exist
 
 **Configuration:**
 - `app.seeder.enabled=true` - Enable/disable the seeder (default: true)
