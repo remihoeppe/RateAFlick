@@ -4,13 +4,18 @@ A RESTful Spring Boot API for managing users, movies, and ratings. This applicat
 
 ## 🚀 Features
 
-- **User Management**: Full CRUD operations for user accounts
+- **User Management**: Full CRUD operations for user accounts with partial updates
 - **Movie Management**: Create and retrieve movie information
-- **Rating System**: Users can rate movies with scores
-- **Data Validation**: Input validation using Jakarta Bean Validation
-- **RESTful API**: Clean REST endpoints following best practices
+- **Rating System**: Users can rate movies with scores (one rating per user per movie)
+- **Data Validation**: Comprehensive input validation using Jakarta Bean Validation
+- **RESTful API**: Clean REST endpoints following best practices with API versioning
 - **Database Integration**: MySQL database with JPA/Hibernate ORM
 - **DTO Pattern**: Data Transfer Objects for request/response handling
+- **Pagination**: Paginated endpoints for listing users and ratings
+- **API Documentation**: OpenAPI/Swagger documentation for interactive API exploration
+- **Error Handling**: Structured error responses with proper HTTP status codes
+- **Transaction Management**: All data-modifying operations are transactional
+- **Logging**: Comprehensive logging using SLF4J
 
 ## 📋 Prerequisites
 
@@ -29,6 +34,7 @@ Before you begin, ensure you have the following installed:
 - **Database**: MySQL (Railway)
 - **ORM**: Spring Data JPA / Hibernate
 - **Validation**: Jakarta Bean Validation (Hibernate Validator)
+- **API Documentation**: SpringDoc OpenAPI (Swagger)
 
 ## 📦 Project Structure
 
@@ -39,13 +45,16 @@ spring-api/
 │   │   ├── java/com/example/demo/
 │   │   │   ├── controllers/        # REST controllers
 │   │   │   │   ├── UserController.java
-│   │   │   │   └── MovieController.java
+│   │   │   │   ├── MovieController.java
+│   │   │   │   └── RatingController.java
 │   │   │   ├── services/            # Business logic layer
 │   │   │   │   ├── UserService.java
-│   │   │   │   └── MovieService.java
+│   │   │   │   ├── MovieService.java
+│   │   │   │   └── RatingService.java
 │   │   │   ├── repositories/        # Data access layer
 │   │   │   │   ├── UserRepository.java
-│   │   │   │   └── MovieRepository.java
+│   │   │   │   ├── MovieRepository.java
+│   │   │   │   └── RatingRepository.java
 │   │   │   ├── models/              # Entity models
 │   │   │   │   ├── User.java
 │   │   │   │   ├── Movie.java
@@ -55,7 +64,15 @@ spring-api/
 │   │   │   │   ├── UpdateUserRequest.java
 │   │   │   │   ├── UserResponse.java
 │   │   │   │   ├── CreateMovieRequest.java
-│   │   │   │   └── RatingResponse.java
+│   │   │   │   ├── CreateRatingRequest.java
+│   │   │   │   ├── RatingResponse.java
+│   │   │   │   └── ErrorResponse.java
+│   │   │   ├── exception/           # Exception handling
+│   │   │   │   ├── GlobalExceptionHandler.java
+│   │   │   │   ├── EmailAlreadyExistsException.java
+│   │   │   │   └── DuplicateRatingException.java
+│   │   │   ├── config/              # Configuration
+│   │   │   │   └── OpenApiConfig.java
 │   │   │   ├── SpringSqlApiApplication.java
 │   │   │   └── PingPong.java
 │   │   └── resources/
@@ -69,15 +86,21 @@ spring-api/
 
 The application uses three main entities with the following relationships:
 
-- **Users**: User accounts with name and email
+- **Users**: User accounts with name and email (email must be unique)
 - **Movies**: Movie catalog with title, release year, director, and language
 - **Ratings**: User ratings for movies (Many-to-One relationship with both Users and Movies)
+    - Unique constraint: A user can only rate a movie once (enforced by unique constraint on `user_id` and `movie_id`)
 
 ### Entity Relationships
 
 ```
 User (1) ────< (Many) Rating (Many) >─── (1) Movie
 ```
+
+### Database Constraints
+
+- **Users.email**: Unique constraint
+- **Ratings(user_id, movie_id)**: Unique constraint (prevents duplicate ratings)
 
 ## ⚙️ Configuration
 
@@ -126,7 +149,19 @@ Or run the main class `SpringSqlApiApplication` from your IDE.
 
 The application will start on `http://localhost:8080` by default.
 
+### 5. Access API Documentation
+
+Once the application is running, you can access:
+
+- **Swagger UI**: `http://localhost:8080/swagger-ui.html`
+    - Interactive API documentation with "Try it out" functionality
+    - Test endpoints directly from the browser
+- **OpenAPI JSON**: `http://localhost:8080/v3/api-docs`
+    - Machine-readable API specification in JSON format
+
 ## 📡 API Endpoints
+
+**Base URL**: All API endpoints use the `/api/v1/` prefix for versioning.
 
 ### Health Check & Welcome
 
@@ -138,12 +173,19 @@ The application will start on `http://localhost:8080` by default.
 
 ### User Endpoints
 
-| Method | Endpoint          | Description                   | Request Body        |
-| ------ | ----------------- | ----------------------------- | ------------------- |
-| GET    | `/api/users`      | Get all users                 | -                   |
-| GET    | `/api/users/{id}` | Get user by ID (with ratings) | -                   |
-| POST   | `/api/users`      | Create a new user             | `CreateUserRequest` |
-| DELETE | `/api/users/{id}` | Delete a user                 | -                   |
+| Method | Endpoint             | Description                   | Request Body        |
+| ------ | -------------------- | ----------------------------- | ------------------- |
+| GET    | `/api/v1/users`      | Get all users (paginated)     | -                   |
+| GET    | `/api/v1/users/{id}` | Get user by ID (with ratings) | -                   |
+| POST   | `/api/v1/users`      | Create a new user             | `CreateUserRequest` |
+| PUT    | `/api/v1/users/{id}` | Update user (partial update)  | `UpdateUserRequest` |
+| DELETE | `/api/v1/users/{id}` | Delete a user                 | -                   |
+
+**Pagination Parameters** (for GET `/api/v1/users`):
+
+- `page` (default: 0): Page number (0-indexed)
+- `size` (default: 20): Number of items per page
+- `sort` (default: id): Sort field(s), e.g., `sort=name,desc`
 
 #### Create User Request Example
 
@@ -174,10 +216,25 @@ The application will start on `http://localhost:8080` by default.
 
 ### Movie Endpoints
 
-| Method | Endpoint           | Description        | Request Body         |
-| ------ | ------------------ | ------------------ | -------------------- |
-| GET    | `/api/movies/{id}` | Get movie by ID    | -                    |
-| POST   | `/api/movies`      | Create a new movie | `CreateMovieRequest` |
+| Method | Endpoint              | Description        | Request Body         |
+| ------ | --------------------- | ------------------ | -------------------- |
+| GET    | `/api/v1/movies/{id}` | Get movie by ID    | -                    |
+| POST   | `/api/v1/movies`      | Create a new movie | `CreateMovieRequest` |
+
+### Rating Endpoints
+
+| Method | Endpoint               | Description                 | Request Body          |
+| ------ | ---------------------- | --------------------------- | --------------------- |
+| GET    | `/api/v1/ratings`      | Get all ratings (paginated) | -                     |
+| GET    | `/api/v1/ratings/{id}` | Get rating by ID            | -                     |
+| POST   | `/api/v1/ratings`      | Create a new rating         | `CreateRatingRequest` |
+| DELETE | `/api/v1/ratings/{id}` | Delete a rating             | -                     |
+
+**Pagination Parameters** (for GET `/api/v1/ratings`):
+
+- `page` (default: 0): Page number (0-indexed)
+- `size` (default: 20): Number of items per page
+- `sort` (default: id): Sort field(s), e.g., `sort=score,desc`
 
 #### Create Movie Request Example
 
@@ -206,14 +263,24 @@ The application will start on `http://localhost:8080` by default.
 
 ### User Validation
 
-- **Name**: Required, 3-100 characters
-- **Email**: Required, must be a valid email format
+- **Name**: Required (on create), 3-100 characters, optional on update (partial updates supported)
+- **Email**: Required (on create), must be a valid email format, optional on update (partial updates supported)
+- **ID**: Must be >= 1 (path variable validation)
 
 ### Movie Validation
 
 - **Title**: Required, 3-100 characters
-- **Release Year**: Required
+- **Release Year**: Required, must be between 1888 and 2100
 - **Director**: Optional, max 100 characters
+- **ID**: Must be >= 1 (path variable validation)
+
+### Rating Validation
+
+- **User ID**: Required, must exist
+- **Movie ID**: Required, must exist
+- **Score**: Required, must be a valid integer
+- **Unique Constraint**: A user can only rate a movie once (enforced at database and service level)
+- **ID**: Must be >= 1 (path variable validation)
 
 ## 🧪 Testing
 
@@ -228,7 +295,7 @@ mvn test
 ### Create a User
 
 ```bash
-curl -X POST http://localhost:8080/api/users \
+curl -X POST http://localhost:8080/api/v1/users \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Jane Smith",
@@ -236,22 +303,47 @@ curl -X POST http://localhost:8080/api/users \
   }'
 ```
 
-### Get All Users
+### Get All Users (Paginated)
 
 ```bash
-curl http://localhost:8080/api/users
+# Get first page (default: 20 items)
+curl http://localhost:8080/api/v1/users
+
+# Get second page with 10 items per page
+curl "http://localhost:8080/api/v1/users?page=1&size=10"
+
+# Get users sorted by name descending
+curl "http://localhost:8080/api/v1/users?sort=name,desc"
 ```
 
 ### Get User by ID
 
 ```bash
-curl http://localhost:8080/api/users/1
+curl http://localhost:8080/api/v1/users/1
+```
+
+### Update User (Partial Update)
+
+```bash
+# Update only the name
+curl -X PUT http://localhost:8080/api/v1/users/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Jane Doe"
+  }'
+
+# Update only the email
+curl -X PUT http://localhost:8080/api/v1/users/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "jane.doe@example.com"
+  }'
 ```
 
 ### Create a Movie
 
 ```bash
-curl -X POST http://localhost:8080/api/movies \
+curl -X POST http://localhost:8080/api/v1/movies \
   -H "Content-Type: application/json" \
   -d '{
     "title": "The Matrix",
@@ -263,13 +355,31 @@ curl -X POST http://localhost:8080/api/movies \
 ### Get Movie by ID
 
 ```bash
-curl http://localhost:8080/api/movies/1
+curl http://localhost:8080/api/v1/movies/1
+```
+
+### Create a Rating
+
+```bash
+curl -X POST http://localhost:8080/api/v1/ratings \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": 1,
+    "movieId": 1,
+    "score": 8
+  }'
+```
+
+### Get All Ratings (Paginated)
+
+```bash
+curl "http://localhost:8080/api/v1/ratings?page=0&size=10"
 ```
 
 ### Delete a User
 
 ```bash
-curl -X DELETE http://localhost:8080/api/users/1
+curl -X DELETE http://localhost:8080/api/v1/users/1
 ```
 
 ## 🏗️ Architecture
@@ -293,21 +403,53 @@ The application follows a layered architecture:
 
 ## 🐛 Error Handling
 
-The application handles common errors:
+The application uses a centralized `GlobalExceptionHandler` with structured `ErrorResponse` DTOs. All errors follow a consistent format:
 
-- **404 Not Found**: When a user or movie ID doesn't exist
-- **400 Bad Request**: When validation fails
-- **409 Conflict**: When attempting to create a user with an existing email
+```json
+{
+    "timestamp": "2026-02-20T10:30:00",
+    "status": 404,
+    "error": "Not Found",
+    "message": "User with ID: 999, was not found"
+}
+```
+
+### Error Types
+
+- **400 Bad Request**:
+    - Validation failures (includes field-level errors)
+    - Invalid arguments (e.g., empty strings, whitespace-only values)
+- **404 Not Found**: When a user, movie, or rating ID doesn't exist
+- **409 Conflict**:
+    - When attempting to create a user with an existing email
+    - When attempting to create a duplicate rating (user already rated the movie)
+- **500 Internal Server Error**: Unexpected errors (sanitized message returned to client)
+
+### Validation Error Example
+
+```json
+{
+    "timestamp": "2026-02-20T10:30:00",
+    "status": 400,
+    "error": "Validation Failed",
+    "message": "Request validation failed",
+    "errors": {
+        "email": "Email must be valid",
+        "name": "Name must be between 3 and 100 characters"
+    }
+}
+```
 
 ## 📚 Dependencies
 
 Key dependencies include:
 
 - `spring-boot-starter-web`: Web framework
-- `spring-boot-starter-data-jpa`: JPA support
+- `spring-boot-starter-data-jpa`: JPA support (includes pagination)
 - `mysql-connector-j`: MySQL database driver
 - `jakarta.validation-api`: Validation API
 - `hibernate-validator`: Validation implementation
+- `springdoc-openapi-starter-webmvc-ui`: OpenAPI/Swagger documentation
 
 See `pom.xml` for the complete list.
 
@@ -327,20 +469,47 @@ This project is open source and available under the [MIT License](LICENSE).
 
 Developed as a Spring Boot learning project.
 
+## Enhancements:
+
+### Critical Issues (Fixed)
+
+- ✅ Added `MethodArgumentNotValidException` handler in `GlobalExceptionHandler`
+- ✅ Added `@Valid` to `MovieController.createMovie()` method parameter
+- ✅ Fixed `@NotBlank` on `CreateMovieRequest.releaseYear` (changed to `@NotNull` with `@Min/@Max`)
+- ✅ Added validation annotations to `UpdateUserRequest`
+- ✅ Created `EmailAlreadyExistsException` and use 409 Conflict instead of 400 for email conflicts
+
+### Important Issues (Fixed)
+
+- ✅ Prevent duplicate ratings (added unique constraint and service-level check)
+- ✅ Added `@Transactional` to service methods that modify data
+- ✅ Added logging (SLF4J) to service classes
+- ✅ Added validation for path variables (`@Min(1)` for IDs)
+- ✅ Narrowed generic exception handler (logs errors, returns sanitized messages)
+
+### Nice-to-Have Improvements (Completed)
+
+- ✅ Added pagination to `getAllUsers()` and `getAllRatings()`
+- ✅ Added `@Min/@Max` validation for releaseYear range (1888-2100)
+- ✅ Added email uniqueness check in `updateUser()` (excludes current user)
+- ✅ Replaced `@Validated` with `@Valid` in controllers (for request bodies)
+- ✅ Created `ErrorResponse` DTO instead of using `Map<String, Object>`
+- ✅ Added OpenAPI/Swagger documentation
+- ✅ Added API versioning (`/api/v1/` prefix)
+
 ## 🔮 Future Enhancements
 
 Potential improvements:
 
 - [ ] Add authentication and authorization (Spring Security)
-- [ ] Implement rating creation endpoints
-- [ ] Add pagination for list endpoints
 - [ ] Add search and filtering capabilities
-- [ ] Implement comprehensive error handling
-- [ ] Add API documentation (Swagger/OpenAPI)
 - [ ] Add unit and integration tests
 - [ ] Implement caching strategies
-- [ ] Add logging and monitoring
+- [ ] Add request/response logging middleware
 - [ ] Support for multiple database types
+- [ ] Add rate limiting
+- [ ] Implement soft delete for users/movies
+- [ ] Add audit logging for data changes
 
 ## 📞 Support
 
@@ -350,19 +519,4 @@ For issues and questions, please open an issue in the repository.
 
 **Happy Coding! 🎉**
 
-### Iteration
-
-Important issues (should fix)
-Prevent duplicate ratings (add unique constraint or service-level check)
-Add @Transactional to service methods that modify data
-Add logging (SLF4J) to service classes
-Add validation for path variables (e.g., @Min(1) for IDs)
-Narrow generic exception handler (log errors, return sanitized messages)
-Nice-to-have improvements
-Add pagination to getAllUsers() and getAllRatings()
-Add @Min/@Max validation for releaseYear range (1888-2100)
-Add email uniqueness check in updateUser() (exclude current user)
-Replace @Validated with @Valid in controllers
-Create ErrorResponse DTO instead of using Map<String, Object>
-Add OpenAPI/Swagger documentation
-Add API versioning (/api/v1/ prefix)
+## ✅ Completed Improvements
