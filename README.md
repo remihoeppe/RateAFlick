@@ -72,7 +72,8 @@ spring-api/
 │   │   │   │   ├── EmailAlreadyExistsException.java
 │   │   │   │   └── DuplicateRatingException.java
 │   │   │   ├── config/              # Configuration
-│   │   │   │   └── OpenApiConfig.java
+│   │   │   │   ├── OpenApiConfig.java
+│   │   │   │   └── DatabaseSeeder.java
 │   │   │   ├── SpringSqlApiApplication.java
 │   │   │   └── PingPong.java
 │   │   └── resources/
@@ -116,9 +117,33 @@ spring.datasource.password=your-password
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.hibernate.show_sql=true
+
+# Database Seeder Configuration
+app.seeder.enabled=true
 ```
 
 **Note**: The current configuration uses Railway MySQL database. Update these values for your local or production environment.
+
+### Database Seeder
+
+The application includes a database seeder that automatically populates the database with sample data on startup (when enabled). The seeder will:
+
+- Create 8 sample users with various names and emails
+- Create 15 sample movies from different genres and languages
+- Only run if the database is empty (won't duplicate existing data)
+- Automatically disabled in production profile
+
+**Configuration:**
+- `app.seeder.enabled=true` - Enable/disable the seeder (default: true)
+- The seeder runs automatically on application startup (except in `prod` profile)
+
+**To disable the seeder:**
+```properties
+app.seeder.enabled=false
+```
+
+**To disable in production:**
+The seeder is automatically disabled when running with the `prod` Spring profile.
 
 ## 🚀 Getting Started
 
