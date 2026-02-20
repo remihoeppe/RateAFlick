@@ -4,6 +4,7 @@ import com.example.demo.DTOs.CreateUserRequest;
 import com.example.demo.DTOs.RatingResponse;
 import com.example.demo.DTOs.UpdateUserRequest;
 import com.example.demo.DTOs.UserResponse;
+import com.example.demo.exception.EmailAlreadyExistsException;
 import com.example.demo.models.Rating;
 import com.example.demo.models.User;
 import com.example.demo.repositories.UserRepository;
@@ -25,7 +26,7 @@ public class UserService {
     // CREATE ON POST Request
     public UserResponse addUser(CreateUserRequest newUserRequest) {
         if (userRepo.existsByEmail(newUserRequest.getEmail())) {
-            throw new IllegalArgumentException("Email already in use: " + newUserRequest.getEmail());
+            throw new EmailAlreadyExistsException("Email already in use: " + newUserRequest.getEmail());
         }
         User user = new User();
         user.setName(newUserRequest.getName());
@@ -54,13 +55,35 @@ public class UserService {
         return userRepo.findAll().stream().map(this::mapToResponse).toList();
     }
 
-    // UPDATE
+    // UPDATE - Partial update: only updates fields that are provided (non-null and non-blank)
     public UserResponse updateUser(Long id, UpdateUserRequest updateUserRequest) {
         User user = userRepo.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.format(
                         "User with ID: %d, was not found", id)));
-        user.setName(updateUserRequest.getName());
-        user.setEmail(updateUserRequest.getEmail());
+        
+        // Only update name if provided (non-null and non-blank)
+        if (updateUserRequest.getName() != null) {
+            String trimmedName = updateUserRequest.getName().trim();
+            if (trimmedName.isEmpty()) {
+                throw new IllegalArgumentException("Name cannot be empty or whitespace-only");
+            }
+            user.setName(trimmedName);
+        }
+        
+        // Only update email if provided (non-null and non-blank)
+        if (updateUserRequest.getEmail() != null) {
+            String trimmedEmail = updateUserRequest.getEmail().trim();
+            if (trimmedEmail.isEmpty()) {
+                throw new IllegalArgumentException("Email cannot be empty or whitespace-only");
+            }
+            // Check if email is already in use by another user
+            if (userRepo.existsByEmail(trimmedEmail) && 
+                !user.getEmail().equals(trimmedEmail)) {
+                throw new EmailAlreadyExistsException("Email already in use: " + trimmedEmail);
+            }
+            user.setEmail(trimmedEmail);
+        }
+        
         User updated = userRepo.save(user);
         return mapToResponse(updated);
     }
