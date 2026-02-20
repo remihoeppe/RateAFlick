@@ -130,27 +130,27 @@ The application will start on `http://localhost:8080` by default.
 
 ### Health Check & Welcome
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/` | Welcome message |
-| GET | `/ping` | Health check (returns "pong") |
-| GET | `/welcome` | HTML welcome page |
+| Method | Endpoint   | Description                   |
+| ------ | ---------- | ----------------------------- |
+| GET    | `/`        | Welcome message               |
+| GET    | `/ping`    | Health check (returns "pong") |
+| GET    | `/welcome` | HTML welcome page             |
 
 ### User Endpoints
 
-| Method | Endpoint | Description | Request Body |
-|--------|----------|-------------|--------------|
-| GET | `/api/users` | Get all users | - |
-| GET | `/api/users/{id}` | Get user by ID (with ratings) | - |
-| POST | `/api/users` | Create a new user | `CreateUserRequest` |
-| DELETE | `/api/users/{id}` | Delete a user | - |
+| Method | Endpoint          | Description                   | Request Body        |
+| ------ | ----------------- | ----------------------------- | ------------------- |
+| GET    | `/api/users`      | Get all users                 | -                   |
+| GET    | `/api/users/{id}` | Get user by ID (with ratings) | -                   |
+| POST   | `/api/users`      | Create a new user             | `CreateUserRequest` |
+| DELETE | `/api/users/{id}` | Delete a user                 | -                   |
 
 #### Create User Request Example
 
 ```json
 {
-  "name": "John Doe",
-  "email": "john.doe@example.com"
+    "name": "John Doe",
+    "email": "john.doe@example.com"
 }
 ```
 
@@ -158,34 +158,34 @@ The application will start on `http://localhost:8080` by default.
 
 ```json
 {
-  "id": 1,
-  "name": "John Doe",
-  "email": "john.doe@example.com",
-  "ratings": [
-    {
-      "id": 1,
-      "score": 8,
-      "movieId": 1,
-      "movieTitle": "Inception"
-    }
-  ]
+    "id": 1,
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "ratings": [
+        {
+            "id": 1,
+            "score": 8,
+            "movieId": 1,
+            "movieTitle": "Inception"
+        }
+    ]
 }
 ```
 
 ### Movie Endpoints
 
-| Method | Endpoint | Description | Request Body |
-|--------|----------|-------------|--------------|
-| GET | `/api/movies/{id}` | Get movie by ID | - |
-| POST | `/api/movies` | Create a new movie | `CreateMovieRequest` |
+| Method | Endpoint           | Description        | Request Body         |
+| ------ | ------------------ | ------------------ | -------------------- |
+| GET    | `/api/movies/{id}` | Get movie by ID    | -                    |
+| POST   | `/api/movies`      | Create a new movie | `CreateMovieRequest` |
 
 #### Create Movie Request Example
 
 ```json
 {
-  "title": "Inception",
-  "releaseYear": 2010,
-  "director": "Christopher Nolan"
+    "title": "Inception",
+    "releaseYear": 2010,
+    "director": "Christopher Nolan"
 }
 ```
 
@@ -193,12 +193,12 @@ The application will start on `http://localhost:8080` by default.
 
 ```json
 {
-  "id": 1,
-  "title": "Inception",
-  "releaseYear": 2010,
-  "director": "Christopher Nolan",
-  "language": null,
-  "ratings": []
+    "id": 1,
+    "title": "Inception",
+    "releaseYear": 2010,
+    "director": "Christopher Nolan",
+    "language": null,
+    "ratings": []
 }
 ```
 
@@ -349,3 +349,20 @@ For issues and questions, please open an issue in the repository.
 ---
 
 **Happy Coding! 🎉**
+
+### Iteration
+
+Important issues (should fix)
+Prevent duplicate ratings (add unique constraint or service-level check)
+Add @Transactional to service methods that modify data
+Add logging (SLF4J) to service classes
+Add validation for path variables (e.g., @Min(1) for IDs)
+Narrow generic exception handler (log errors, return sanitized messages)
+Nice-to-have improvements
+Add pagination to getAllUsers() and getAllRatings()
+Add @Min/@Max validation for releaseYear range (1888-2100)
+Add email uniqueness check in updateUser() (exclude current user)
+Replace @Validated with @Valid in controllers
+Create ErrorResponse DTO instead of using Map<String, Object>
+Add OpenAPI/Swagger documentation
+Add API versioning (/api/v1/ prefix)

@@ -4,6 +4,11 @@ import com.example.demo.DTOs.CreateUserRequest;
 import com.example.demo.DTOs.UpdateUserRequest;
 import com.example.demo.DTOs.UserResponse;
 import com.example.demo.services.UserService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -12,7 +17,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/v1/users")
+@Validated
 public class UserController {
     private final UserService userService;
 
@@ -21,29 +27,30 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
-        return ResponseEntity.ok(userService.findAllUsers());
+    public ResponseEntity<Page<UserResponse>> getAllUsers(
+            @PageableDefault(size = 20, sort = "id") Pageable pageable) {
+        return ResponseEntity.ok(userService.findAllUsers(pageable));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserResponse> getUserById(@PathVariable @Min(1) Long id) {
         return ResponseEntity.ok(userService.findUserByIdWithRatings(id));
     }
 
     @PostMapping
-    public ResponseEntity<UserResponse> createUser(@Validated @RequestBody CreateUserRequest newUserRequest) {
+    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest newUserRequest) {
         UserResponse createdUser = userService.addUser(newUserRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @Validated @RequestBody UpdateUserRequest updateUserRequest) {
+    public ResponseEntity<UserResponse> updateUser(@PathVariable @Min(1) Long id, @Valid @RequestBody UpdateUserRequest updateUserRequest) {
         UserResponse updatedUser = userService.updateUser(id, updateUserRequest);
         return ResponseEntity.ok(updatedUser);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable @Min(1) Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }

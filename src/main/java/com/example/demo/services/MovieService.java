@@ -7,7 +7,10 @@ import com.example.demo.models.Movie;
 import com.example.demo.models.Rating;
 import com.example.demo.repositories.MovieRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
@@ -15,19 +18,23 @@ import java.util.stream.Collectors;
 
 @Service
 public class MovieService {
+    private static final Logger logger = LoggerFactory.getLogger(MovieService.class);
+    
     private final MovieRepository movieRepo;
 
     public MovieService(MovieRepository movieRepo) {
         this.movieRepo = movieRepo;
     }
 
+    @Transactional
     public MovieResponse createMovie(CreateMovieRequest newMovie) {
-//        Add validation HERE
+        logger.debug("Creating movie with title: {}", newMovie.getTitle());
         Movie movie = new Movie();
         movie.setTitle(newMovie.getTitle());
         movie.setReleaseYear(newMovie.getReleaseYear());
         movie.setDirector(newMovie.getDirector());
         Movie saved = movieRepo.save(movie);
+        logger.info("Created movie ID: {} with title: {}", saved.getId(), saved.getTitle());
         return mapToResponse(saved);
     }
 

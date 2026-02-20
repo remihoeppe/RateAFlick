@@ -3,13 +3,17 @@ package com.example.demo.controllers;
 import com.example.demo.DTOs.CreateMovieRequest;
 import com.example.demo.DTOs.MovieResponse;
 import com.example.demo.services.MovieService;
+import org.springframework.validation.annotation.Validated;
+
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/movies")
+@RequestMapping("/api/v1/movies")
+@Validated
 public class MovieController {
     private final MovieService movieService;
 
@@ -18,7 +22,7 @@ public class MovieController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<MovieResponse> getMovieById(@PathVariable Long id) {
+    public ResponseEntity<MovieResponse> getMovieById(@PathVariable @Min(1) Long id) {
         return ResponseEntity.ok(movieService.findMovieById(id));
     }
 
