@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -66,8 +67,26 @@ public class MovieService {
     public PageResponse<MovieResponse> findAllMovies(Pageable pageable) {
         logger.debug("Finding all movies with pagination: page={}, size={}",
                 pageable.getPageNumber(), pageable.getPageSize());
-        Page<MovieResponse> page = movieRepo.findAll(pageable).map(this::mapToResponseWithRatings);
-        return PageResponse.of(page);
+        Page<Movie> page = movieRepo.findAll(pageable);
+        List<Long> ids = page.getContent().stream().map(Movie::getId).toList();
+        if (ids.isEmpty()) {
+            return PageResponse.of(page.map(this::mapToResponseWithRatings));
+        }
+        List<Movie> withRatings = movieRepo.findAllByIdInWithRatingsAndDirector(ids);
+        Map<Long, Movie> byId = withRatings.stream().collect(Collectors.toMap(Movie::getId, m -> m));
+        List<MovieResponse> content = ids.stream()
+                .map(byId::get)
+                .map(this::mapToResponseWithRatings)
+                .toList();
+        return new PageResponse<>(
+                content,
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.getNumber(),
+                page.getSize(),
+                page.isFirst(),
+                page.isLast(),
+                content.size());
     }
 
     // Map Movie to MovieResponse without ratings
