@@ -1,8 +1,10 @@
 package com.example.demo.config;
 
+import com.example.demo.models.Director;
 import com.example.demo.models.Movie;
 import com.example.demo.models.Rating;
 import com.example.demo.models.User;
+import com.example.demo.repositories.DirectorRepository;
 import com.example.demo.repositories.MovieRepository;
 import com.example.demo.repositories.RatingRepository;
 import com.example.demo.repositories.UserRepository;
@@ -28,7 +30,7 @@ public class DatabaseSeeder {
     @Bean
     @Profile("!prod") // Don't run seeder in production profile
     public CommandLineRunner seedDatabase(UserRepository userRepository, MovieRepository movieRepository,
-            RatingRepository ratingRepository) {
+            DirectorRepository directorRepository, RatingRepository ratingRepository) {
         return args -> {
             if (!seederEnabled) {
                 logger.info("Database seeder is disabled");
@@ -40,8 +42,11 @@ public class DatabaseSeeder {
             // Seed Users
             seedUsers(userRepository);
 
+            // Seed Directors (before movies)
+            seedDirectors(directorRepository);
+
             // Seed Movies
-            seedMovies(movieRepository);
+            seedMovies(movieRepository, directorRepository);
 
             // Seed Ratings (must be after users and movies are seeded)
             seedRatings(userRepository, movieRepository, ratingRepository);
@@ -72,7 +77,25 @@ public class DatabaseSeeder {
         logger.info("Seeded {} users", users.size());
     }
 
-    private void seedMovies(MovieRepository movieRepository) {
+    private void seedDirectors(DirectorRepository directorRepository) {
+        if (directorRepository.count() > 0) {
+            logger.info("Directors already exist, skipping director seeding");
+            return;
+        }
+        logger.info("Seeding directors...");
+        List<String> directorNames = Arrays.asList(
+                "The Wachowskis", "Christopher Nolan", "Frank Darabont", "Quentin Tarantino",
+                "David Fincher", "Robert Zemeckis", "Francis Ford Coppola", "Peter Jackson",
+                "Bong Joon-ho", "Hayao Miyazaki", "Jean-Pierre Jeunet", "Fernando Meirelles",
+                "Park Chan-wook");
+        for (String name : directorNames) {
+            Director d = new Director(name);
+            directorRepository.save(d);
+        }
+        logger.info("Seeded {} directors", directorNames.size());
+    }
+
+    private void seedMovies(MovieRepository movieRepository, DirectorRepository directorRepository) {
         if (movieRepository.count() > 0) {
             logger.info("Movies already exist, skipping movie seeding");
             return;
@@ -81,21 +104,21 @@ public class DatabaseSeeder {
         logger.info("Seeding movies...");
 
         List<Movie> movies = Arrays.asList(
-                createMovie("The Matrix", 1999, "The Wachowskis", "English"),
-                createMovie("Inception", 2010, "Christopher Nolan", "English"),
-                createMovie("The Shawshank Redemption", 1994, "Frank Darabont", "English"),
-                createMovie("Pulp Fiction", 1994, "Quentin Tarantino", "English"),
-                createMovie("The Dark Knight", 2008, "Christopher Nolan", "English"),
-                createMovie("Fight Club", 1999, "David Fincher", "English"),
-                createMovie("Forrest Gump", 1994, "Robert Zemeckis", "English"),
-                createMovie("The Godfather", 1972, "Francis Ford Coppola", "English"),
-                createMovie("Interstellar", 2014, "Christopher Nolan", "English"),
-                createMovie("The Lord of the Rings: The Fellowship of the Ring", 2001, "Peter Jackson", "English"),
-                createMovie("Parasite", 2019, "Bong Joon-ho", "Korean"),
-                createMovie("Spirited Away", 2001, "Hayao Miyazaki", "Japanese"),
-                createMovie("Amélie", 2001, "Jean-Pierre Jeunet", "French"),
-                createMovie("City of God", 2002, "Fernando Meirelles", "Portuguese"),
-                createMovie("Oldboy", 2003, "Park Chan-wook", "Korean"));
+                createMovie(directorRepository, "The Matrix", 1999, "The Wachowskis", "English"),
+                createMovie(directorRepository, "Inception", 2010, "Christopher Nolan", "English"),
+                createMovie(directorRepository, "The Shawshank Redemption", 1994, "Frank Darabont", "English"),
+                createMovie(directorRepository, "Pulp Fiction", 1994, "Quentin Tarantino", "English"),
+                createMovie(directorRepository, "The Dark Knight", 2008, "Christopher Nolan", "English"),
+                createMovie(directorRepository, "Fight Club", 1999, "David Fincher", "English"),
+                createMovie(directorRepository, "Forrest Gump", 1994, "Robert Zemeckis", "English"),
+                createMovie(directorRepository, "The Godfather", 1972, "Francis Ford Coppola", "English"),
+                createMovie(directorRepository, "Interstellar", 2014, "Christopher Nolan", "English"),
+                createMovie(directorRepository, "The Lord of the Rings: The Fellowship of the Ring", 2001, "Peter Jackson", "English"),
+                createMovie(directorRepository, "Parasite", 2019, "Bong Joon-ho", "Korean"),
+                createMovie(directorRepository, "Spirited Away", 2001, "Hayao Miyazaki", "Japanese"),
+                createMovie(directorRepository, "Amélie", 2001, "Jean-Pierre Jeunet", "French"),
+                createMovie(directorRepository, "City of God", 2002, "Fernando Meirelles", "Portuguese"),
+                createMovie(directorRepository, "Oldboy", 2003, "Park Chan-wook", "Korean"));
 
         movieRepository.saveAll(movies);
         logger.info("Seeded {} movies", movies.size());
@@ -108,12 +131,16 @@ public class DatabaseSeeder {
         return user;
     }
 
-    private Movie createMovie(String title, int releaseYear, String director, String language) {
+    private Movie createMovie(DirectorRepository directorRepository,
+            String title, int releaseYear, String directorName, String language) {
         Movie movie = new Movie();
         movie.setTitle(title);
         movie.setReleaseYear(releaseYear);
-        movie.setDirector(director);
         movie.setLanguage(language);
+        directorRepository.findAll().stream()
+                .filter(d -> d.getName().equals(directorName))
+                .findFirst()
+                .ifPresent(movie::setDirector);
         return movie;
     }
 

@@ -12,8 +12,8 @@ public class CreateMovieRequest {
     @Max(value = 2100, message = "Release Year must be at most 2100")
     private Integer releaseYear;
 
-    @Size(max = 100, message = "Director name must be less than 100 characters")
-    private String director;
+    /** Optional ID of an existing Director. If null, the movie has no director. */
+    private Long directorId;
 
     public String getTitle() {
         return title;
@@ -23,7 +23,11 @@ public class CreateMovieRequest {
         return releaseYear;
     }
 
-    public String getDirector() {
-        return director;
+    public Long getDirectorId() {
+        return directorId;
+    }
+
+    public void setDirectorId(Long directorId) {
+        this.directorId = directorId;
     }
 }

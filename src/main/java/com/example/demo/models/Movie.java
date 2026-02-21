@@ -3,6 +3,7 @@ package com.example.demo.models;
 import jakarta.persistence.*;
 
 import java.util.List;
+import java.util.ArrayList;
 
 @Entity(name = "Movies")
 public class Movie {
@@ -11,14 +12,19 @@ public class Movie {
     private Long id;
     private String title;
     private int releaseYear;
-    private String director;
     private String language;
 
+    @ManyToOne
+    @JoinColumn(name = "director_id")
+    private Director director;
+
+    @ManyToMany
+    @JoinTable(name = "movie_actors", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "actor_id"))
+    private List<Actor> actors = new ArrayList<Actor>();
 
     // One Movie -> Many Ratings
     @OneToMany(mappedBy = "movie")
     private List<Rating> ratings;
-
 
     public String getLanguage() {
         return language;
@@ -32,12 +38,20 @@ public class Movie {
         return id;
     }
 
-    public String getDirector() {
+    public Director getDirector() {
         return director;
     }
 
-    public void setDirector(String director) {
+    public void setDirector(Director director) {
         this.director = director;
+    }
+
+    public List<Actor> getActors() {
+        return actors;
+    }
+
+    public void setActors(List<Actor> actors) {
+        this.actors = actors;
     }
 
     public void setId(Long id) {

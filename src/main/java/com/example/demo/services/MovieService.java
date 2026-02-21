@@ -5,6 +5,7 @@ import com.example.demo.DTOs.MovieResponse;
 import com.example.demo.DTOs.RatingResponse;
 import com.example.demo.models.Movie;
 import com.example.demo.models.Rating;
+import com.example.demo.repositories.DirectorRepository;
 import com.example.demo.repositories.MovieRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
@@ -21,9 +22,11 @@ public class MovieService {
     private static final Logger logger = LoggerFactory.getLogger(MovieService.class);
     
     private final MovieRepository movieRepo;
+    private final DirectorRepository directorRepo;
 
-    public MovieService(MovieRepository movieRepo) {
+    public MovieService(MovieRepository movieRepo, DirectorRepository directorRepo) {
         this.movieRepo = movieRepo;
+        this.directorRepo = directorRepo;
     }
 
     @Transactional
@@ -32,7 +35,11 @@ public class MovieService {
         Movie movie = new Movie();
         movie.setTitle(newMovie.getTitle());
         movie.setReleaseYear(newMovie.getReleaseYear());
-        movie.setDirector(newMovie.getDirector());
+        if (newMovie.getDirectorId() != null) {
+            movie.setDirector(directorRepo.findById(newMovie.getDirectorId())
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Director with ID: " + newMovie.getDirectorId() + " not found")));
+        }
         Movie saved = movieRepo.save(movie);
         logger.info("Created movie ID: {} with title: {}", saved.getId(), saved.getTitle());
         return mapToResponse(saved);
@@ -56,11 +63,12 @@ public class MovieService {
 
     // Map Movie to MovieResponse without ratings
     private MovieResponse mapToResponse(Movie movie) {
+        String directorName = movie.getDirector() != null ? movie.getDirector().getName() : null;
         return new MovieResponse(
                 movie.getId(),
                 movie.getTitle(),
                 movie.getReleaseYear(),
-                movie.getDirector(),
+                directorName,
                 movie.getLanguage()
         );
     }
@@ -72,11 +80,12 @@ public class MovieService {
                         .map(this::mapRatingToResponse)
                         .collect(Collectors.toList())
                 : Collections.emptyList();
+        String directorName = movie.getDirector() != null ? movie.getDirector().getName() : null;
         return new MovieResponse(
                 movie.getId(),
                 movie.getTitle(),
                 movie.getReleaseYear(),
-                movie.getDirector(),
+                directorName,
                 movie.getLanguage(),
                 ratings
         );
