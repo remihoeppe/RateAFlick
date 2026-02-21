@@ -7,6 +7,7 @@ import jakarta.persistence.*;
  * Uses JOINED inheritance: subclasses have their own tables with a PK that references this table.
  */
 @Entity(name = "Artists")
+@Table(name = "artists")
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Artist {
 

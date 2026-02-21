@@ -6,27 +6,20 @@ public class MovieResponse {
     private int releaseYear;
     private String director;
     private String language;
-    /** When present: items (array of ratings) + average score. */
-    private MovieRatings ratings;
+    /** Average rating score, or null if no ratings. */
+    private Double ratingsAvg;
 
-    // Constructor without ratings
     public MovieResponse(Long id, String title, int releaseYear, String director, String language) {
-        this.id = id;
-        this.title = title;
-        this.releaseYear = releaseYear;
-        this.director = director;
-        this.language = language;
-        this.ratings = null;
+        this(id, title, releaseYear, director, language, null);
     }
 
-    // Constructor with ratings (items array + aggregate average)
-    public MovieResponse(Long id, String title, int releaseYear, String director, String language, MovieRatings ratings) {
+    public MovieResponse(Long id, String title, int releaseYear, String director, String language, Double ratingsAvg) {
         this.id = id;
         this.title = title;
         this.releaseYear = releaseYear;
         this.director = director;
         this.language = language;
-        this.ratings = ratings;
+        this.ratingsAvg = ratingsAvg;
     }
 
     public Long getId() {
@@ -49,7 +42,7 @@ public class MovieResponse {
         return language;
     }
 
-    public MovieRatings getRatings() {
-        return ratings;
+    public Double getRatingsAvg() {
+        return ratingsAvg;
     }
 }

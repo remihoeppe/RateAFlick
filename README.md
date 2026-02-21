@@ -37,6 +37,24 @@ Before you begin, ensure you have the following installed:
 - **Validation**: Jakarta Bean Validation (Hibernate Validator)
 - **API Documentation**: SpringDoc OpenAPI (Swagger)
 
+## ⚡ Performance: Movies list endpoint
+
+The `GET /api/v1/movies` endpoint was optimized from **~4000 ms** to **~350 ms** when using a remote DB (e.g. Railway).
+
+**Why it was slow**
+- The database is remote, so each round-trip adds significant latency.
+- The original implementation caused **N+1 queries**: one query for the page of movies, then one query per movie to load ratings and director when building the response.
+- It also loaded **every rating** for every movie on the list just to compute an average.
+
+**What we changed**
+1. **Eliminated N+1** – Use `@EntityGraph` (and a two-query pattern) so a page of movies is loaded with director in one go instead of one query per movie.
+2. **List returns only the average** – The list endpoint now exposes only `ratingsAvg` (no array of ratings), so we don’t load the full `Rating` collection for listing.
+3. **Single native query for the list** – One native SQL query returns the full list page: movie fields, director name (via joins to `directors` and `artists`), and `ratings_avg` (via a scalar subquery). Pagination uses Spring’s `Pageable` and a separate `countQuery`, so the list runs in **two round-trips** (count + page) instead of many.
+
+**Relevant code**
+- `MovieRepository.findMovieListPage(Pageable)` – native query joining `movies`, `directors`, `artists` and a subquery for `AVG(score)` from `ratings`.
+- `MovieService.findAllMovies(Pageable)` – calls `findMovieListPage`, maps each row to `MovieResponse` (including `ratingsAvg`), and builds `PageResponse`.
+
 ## 📦 Project Structure
 
 ```
