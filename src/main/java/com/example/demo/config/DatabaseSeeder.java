@@ -8,6 +8,9 @@ import com.example.demo.repositories.DirectorRepository;
 import com.example.demo.repositories.MovieRepository;
 import com.example.demo.repositories.RatingRepository;
 import com.example.demo.repositories.UserRepository;
+import jakarta.persistence.EntityManagerFactory;
+import org.hibernate.SessionFactory;
+import org.hibernate.relational.SchemaManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +18,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.Arrays;
 import java.util.List;
@@ -27,14 +31,25 @@ public class DatabaseSeeder {
     @Value("${app.seeder.enabled:true}")
     private boolean seederEnabled;
 
+    @Value("${app.seeder.drop-and-reseed:false}")
+    private boolean dropAndReseed;
+
     @Bean
     @Profile("!prod") // Don't run seeder in production profile
     public CommandLineRunner seedDatabase(UserRepository userRepository, MovieRepository movieRepository,
-            DirectorRepository directorRepository, RatingRepository ratingRepository) {
+            DirectorRepository directorRepository, RatingRepository ratingRepository,
+            JdbcTemplate jdbcTemplate, EntityManagerFactory entityManagerFactory) {
         return args -> {
             if (!seederEnabled) {
                 logger.info("Database seeder is disabled");
                 return;
+            }
+
+            if (dropAndReseed) {
+                logger.warn("Drop-and-reseed is enabled: dropping all tables and recreating schema...");
+                dropAllTables(jdbcTemplate);
+                recreateSchema(entityManagerFactory);
+                logger.info("Schema recreated, proceeding to seed data.");
             }
 
             logger.info("Starting database seeding...");
@@ -53,6 +68,36 @@ public class DatabaseSeeder {
 
             logger.info("Database seeding completed successfully!");
         };
+    }
+
+    /**
+     * Drops all tables in the current database (MySQL). Disables foreign key checks
+     * so tables can be dropped in any order.
+     */
+    private void dropAllTables(JdbcTemplate jdbcTemplate) {
+        jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
+        try {
+            List<String> tableNames = jdbcTemplate.queryForList(
+                    "SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE'",
+                    String.class);
+            for (String tableName : tableNames) {
+                jdbcTemplate.execute("DROP TABLE IF EXISTS `" + tableName + "`");
+                logger.debug("Dropped table: {}", tableName);
+            }
+            logger.info("Dropped {} tables", tableNames.size());
+        } finally {
+            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
+        }
+    }
+
+    /**
+     * Recreates the schema from JPA entities using Hibernate's SchemaManager (Hibernate 6.2+).
+     */
+    private void recreateSchema(EntityManagerFactory entityManagerFactory) {
+        SessionFactory sessionFactory = entityManagerFactory.unwrap(SessionFactory.class);
+        SchemaManager schemaManager = sessionFactory.getSchemaManager();
+        schemaManager.exportMappedObjects(true);
+        logger.info("Schema recreated from entity mappings.");
     }
 
     private void seedUsers(UserRepository userRepository) {
