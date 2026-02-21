@@ -1,19 +1,17 @@
 package com.example.demo.controllers;
 
 import com.example.demo.DTOs.CreateRatingRequest;
+import com.example.demo.DTOs.PageResponse;
 import com.example.demo.DTOs.RatingResponse;
 import com.example.demo.services.RatingService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/ratings")
@@ -26,7 +24,7 @@ public class RatingController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<RatingResponse>> getAllRatings(
+    public ResponseEntity<PageResponse<RatingResponse>> getAllRatings(
             @PageableDefault(size = 20, sort = "id") Pageable pageable) {
         return ResponseEntity.ok(ratingService.findAllRatings(pageable));
     }

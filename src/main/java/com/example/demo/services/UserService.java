@@ -1,6 +1,7 @@
 package com.example.demo.services;
 
 import com.example.demo.DTOs.CreateUserRequest;
+import com.example.demo.DTOs.PageResponse;
 import com.example.demo.DTOs.RatingResponse;
 import com.example.demo.DTOs.UpdateUserRequest;
 import com.example.demo.DTOs.UserResponse;
@@ -11,7 +12,6 @@ import com.example.demo.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,10 +65,10 @@ public class UserService {
         return userRepo.findAll().stream().map(this::mapToResponse).toList();
     }
 
-    public Page<UserResponse> findAllUsers(Pageable pageable) {
+    public PageResponse<UserResponse> findAllUsers(Pageable pageable) {
         logger.debug("Finding all users with pagination: page={}, size={}", 
                 pageable.getPageNumber(), pageable.getPageSize());
-        return userRepo.findAll(pageable).map(this::mapToResponse);
+        return PageResponse.of(userRepo.findAll(pageable).map(this::mapToResponse));
     }
 
     // UPDATE - Partial update: only updates fields that are provided (non-null and

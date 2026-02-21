@@ -1,6 +1,7 @@
 package com.example.demo.services;
 
 import com.example.demo.DTOs.CreateRatingRequest;
+import com.example.demo.DTOs.PageResponse;
 import com.example.demo.DTOs.RatingResponse;
 import com.example.demo.exception.DuplicateRatingException;
 import com.example.demo.models.Movie;
@@ -12,7 +13,6 @@ import com.example.demo.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -86,10 +86,10 @@ public class RatingService {
                 .collect(Collectors.toList());
     }
 
-    public Page<RatingResponse> findAllRatings(Pageable pageable) {
+    public PageResponse<RatingResponse> findAllRatings(Pageable pageable) {
         logger.debug("Finding all ratings with pagination: page={}, size={}", 
                 pageable.getPageNumber(), pageable.getPageSize());
-        return ratingRepo.findAll(pageable).map(this::mapToResponse);
+        return PageResponse.of(ratingRepo.findAll(pageable).map(this::mapToResponse));
     }
 
     @Transactional

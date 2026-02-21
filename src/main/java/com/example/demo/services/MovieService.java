@@ -2,6 +2,7 @@ package com.example.demo.services;
 
 import com.example.demo.DTOs.CreateMovieRequest;
 import com.example.demo.DTOs.MovieResponse;
+import com.example.demo.DTOs.PageResponse;
 import com.example.demo.DTOs.RatingResponse;
 import com.example.demo.models.Movie;
 import com.example.demo.models.Rating;
@@ -10,6 +11,8 @@ import com.example.demo.repositories.MovieRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +23,7 @@ import java.util.stream.Collectors;
 @Service
 public class MovieService {
     private static final Logger logger = LoggerFactory.getLogger(MovieService.class);
-    
+
     private final MovieRepository movieRepo;
     private final DirectorRepository directorRepo;
 
@@ -48,17 +51,22 @@ public class MovieService {
     public MovieResponse findMovieById(Long id) {
         Movie movie = movieRepo.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.format(
-                "Movie with ID: %d, was not found", id
-        )));
+                        "Movie with ID: %d, was not found", id)));
         return mapToResponse(movie);
     }
 
     public MovieResponse findMovieByIdWithRatings(Long id) {
         Movie movie = movieRepo.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.format(
-                "Movie with ID: %d, was not found", id
-        )));
+                        "Movie with ID: %d, was not found", id)));
         return mapToResponseWithRatings(movie);
+    }
+
+    public PageResponse<MovieResponse> findAllMovies(Pageable pageable) {
+        logger.debug("Finding all movies with pagination: page={}, size={}",
+                pageable.getPageNumber(), pageable.getPageSize());
+        Page<MovieResponse> page = movieRepo.findAll(pageable).map(this::mapToResponseWithRatings);
+        return PageResponse.of(page);
     }
 
     // Map Movie to MovieResponse without ratings
@@ -69,8 +77,7 @@ public class MovieService {
                 movie.getTitle(),
                 movie.getReleaseYear(),
                 directorName,
-                movie.getLanguage()
-        );
+                movie.getLanguage());
     }
 
     // Map Movie to MovieResponse with ratings
@@ -87,8 +94,7 @@ public class MovieService {
                 movie.getReleaseYear(),
                 directorName,
                 movie.getLanguage(),
-                ratings
-        );
+                ratings);
     }
 
     // Map Rating to RatingResponse

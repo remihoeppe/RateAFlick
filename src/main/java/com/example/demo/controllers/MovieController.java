@@ -2,11 +2,14 @@ package com.example.demo.controllers;
 
 import com.example.demo.DTOs.CreateMovieRequest;
 import com.example.demo.DTOs.MovieResponse;
+import com.example.demo.DTOs.PageResponse;
 import com.example.demo.services.MovieService;
 import org.springframework.validation.annotation.Validated;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +22,12 @@ public class MovieController {
 
     public MovieController(MovieService movieService) {
         this.movieService = movieService;
+    }
+
+    @GetMapping
+    public ResponseEntity<PageResponse<MovieResponse>> getAllMovies(
+            @PageableDefault(size = 20, sort = "id") Pageable pageable) {
+        return ResponseEntity.ok(movieService.findAllMovies(pageable));
     }
 
     @GetMapping("/{id}")
