@@ -8,7 +8,7 @@ public class MovieResponse {
     private int releaseYear;
     private String director;
     private String language;
-    private List<RatingResponse> ratings;
+    private List<MovieRatingSummary> ratings;
 
     // Constructor without ratings
     public MovieResponse(Long id, String title, int releaseYear, String director, String language) {
@@ -20,8 +20,8 @@ public class MovieResponse {
         this.ratings = null;
     }
 
-    // Constructor with ratings
-    public MovieResponse(Long id, String title, int releaseYear, String director, String language, List<RatingResponse> ratings) {
+    // Constructor with ratings (summary only: id + score, no repeated movie data)
+    public MovieResponse(Long id, String title, int releaseYear, String director, String language, List<MovieRatingSummary> ratings) {
         this.id = id;
         this.title = title;
         this.releaseYear = releaseYear;
@@ -50,7 +50,7 @@ public class MovieResponse {
         return language;
     }
 
-    public List<RatingResponse> getRatings() {
+    public List<MovieRatingSummary> getRatings() {
         return ratings;
     }
 }

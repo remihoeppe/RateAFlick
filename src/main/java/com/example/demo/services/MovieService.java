@@ -1,9 +1,9 @@
 package com.example.demo.services;
 
 import com.example.demo.DTOs.CreateMovieRequest;
+import com.example.demo.DTOs.MovieRatingSummary;
 import com.example.demo.DTOs.MovieResponse;
 import com.example.demo.DTOs.PageResponse;
-import com.example.demo.DTOs.RatingResponse;
 import com.example.demo.models.Movie;
 import com.example.demo.models.Rating;
 import com.example.demo.repositories.DirectorRepository;
@@ -80,11 +80,11 @@ public class MovieService {
                 movie.getLanguage());
     }
 
-    // Map Movie to MovieResponse with ratings
+    // Map Movie to MovieResponse with ratings (summary only, no repeated movie data)
     private MovieResponse mapToResponseWithRatings(Movie movie) {
-        List<RatingResponse> ratings = movie.getRatings() != null
+        List<MovieRatingSummary> ratings = movie.getRatings() != null
                 ? movie.getRatings().stream()
-                        .map(this::mapRatingToResponse)
+                        .map(this::toMovieRatingSummary)
                         .collect(Collectors.toList())
                 : Collections.emptyList();
         String directorName = movie.getDirector() != null ? movie.getDirector().getName() : null;
@@ -97,10 +97,7 @@ public class MovieService {
                 ratings);
     }
 
-    // Map Rating to RatingResponse
-    private RatingResponse mapRatingToResponse(Rating rating) {
-        Long movieId = rating.getMovie() != null ? rating.getMovie().getId() : null;
-        String movieTitle = rating.getMovie() != null ? rating.getMovie().getTitle() : null;
-        return new RatingResponse(rating.getId(), rating.getScore(), movieId, movieTitle);
+    private MovieRatingSummary toMovieRatingSummary(Rating rating) {
+        return new MovieRatingSummary(rating.getId(), rating.getScore());
     }
 }
