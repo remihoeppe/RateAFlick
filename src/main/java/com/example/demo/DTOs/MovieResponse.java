@@ -1,14 +1,13 @@
 package com.example.demo.DTOs;
 
-import java.util.List;
-
 public class MovieResponse {
     private Long id;
     private String title;
     private int releaseYear;
     private String director;
     private String language;
-    private List<MovieRatingSummary> ratings;
+    /** When present: items (array of ratings) + average score. */
+    private MovieRatings ratings;
 
     // Constructor without ratings
     public MovieResponse(Long id, String title, int releaseYear, String director, String language) {
@@ -20,8 +19,8 @@ public class MovieResponse {
         this.ratings = null;
     }
 
-    // Constructor with ratings (summary only: id + score, no repeated movie data)
-    public MovieResponse(Long id, String title, int releaseYear, String director, String language, List<MovieRatingSummary> ratings) {
+    // Constructor with ratings (items array + aggregate average)
+    public MovieResponse(Long id, String title, int releaseYear, String director, String language, MovieRatings ratings) {
         this.id = id;
         this.title = title;
         this.releaseYear = releaseYear;
@@ -50,7 +49,7 @@ public class MovieResponse {
         return language;
     }
 
-    public List<MovieRatingSummary> getRatings() {
+    public MovieRatings getRatings() {
         return ratings;
     }
 }

@@ -2,6 +2,7 @@ package com.example.demo.services;
 
 import com.example.demo.DTOs.CreateMovieRequest;
 import com.example.demo.DTOs.MovieRatingSummary;
+import com.example.demo.DTOs.MovieRatings;
 import com.example.demo.DTOs.MovieResponse;
 import com.example.demo.DTOs.PageResponse;
 import com.example.demo.models.Movie;
@@ -80,13 +81,14 @@ public class MovieService {
                 movie.getLanguage());
     }
 
-    // Map Movie to MovieResponse with ratings (summary only, no repeated movie data)
+    // Map Movie to MovieResponse with ratings (items + aggregate average)
     private MovieResponse mapToResponseWithRatings(Movie movie) {
-        List<MovieRatingSummary> ratings = movie.getRatings() != null
+        List<MovieRatingSummary> items = movie.getRatings() != null
                 ? movie.getRatings().stream()
                         .map(this::toMovieRatingSummary)
                         .collect(Collectors.toList())
                 : Collections.emptyList();
+        MovieRatings ratings = MovieRatings.from(items);
         String directorName = movie.getDirector() != null ? movie.getDirector().getName() : null;
         return new MovieResponse(
                 movie.getId(),
