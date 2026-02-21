@@ -16,6 +16,7 @@ A RESTful Spring Boot API for managing users, movies, and ratings. This applicat
 - **Error Handling**: Structured error responses with proper HTTP status codes
 - **Transaction Management**: All data-modifying operations are transactional
 - **Logging**: Comprehensive logging using SLF4J
+- **Database Seeder**: Automatic population of sample data for development and testing
 
 ## 📋 Prerequisites
 
@@ -135,16 +136,19 @@ The application includes a database seeder that automatically populates the data
 - Automatically disabled in production profile
 
 **Rating Seeder Details:**
+
 - Creates ratings for various user-movie combinations
 - Scores range from 7 to 10 (realistic rating distribution)
 - Respects the unique constraint (one rating per user per movie)
 - Only seeds if users and movies already exist
 
 **Configuration:**
+
 - `app.seeder.enabled=true` - Enable/disable the seeder (default: true)
 - The seeder runs automatically on application startup (except in `prod` profile)
 
 **To disable the seeder:**
+
 ```properties
 app.seeder.enabled=false
 ```
@@ -181,7 +185,22 @@ Or run the main class `SpringSqlApiApplication` from your IDE.
 
 The application will start on `http://localhost:8080` by default.
 
-### 5. Access API Documentation
+### 5. Verify Database Seeding
+
+If the seeder is enabled and the database is empty, you should see log messages indicating that users, movies, and ratings have been seeded. You can verify by:
+
+```bash
+# Check seeded users
+curl http://localhost:8080/api/v1/users
+
+# Check seeded movies
+curl http://localhost:8080/api/v1/movies/1
+
+# Check seeded ratings
+curl http://localhost:8080/api/v1/ratings
+```
+
+### 6. Access API Documentation
 
 Once the application is running, you can access:
 
@@ -288,6 +307,27 @@ Once the application is running, you can access:
     "director": "Christopher Nolan",
     "language": null,
     "ratings": []
+}
+```
+
+#### Create Rating Request Example
+
+```json
+{
+    "userId": 1,
+    "movieId": 1,
+    "score": 8
+}
+```
+
+#### Rating Response Example
+
+```json
+{
+    "id": 1,
+    "score": 8,
+    "movieId": 1,
+    "movieTitle": "Inception"
 }
 ```
 
@@ -501,7 +541,7 @@ This project is open source and available under the [MIT License](LICENSE).
 
 Developed as a Spring Boot learning project.
 
-## Enhancements:
+## ✅ Completed Improvements
 
 ### Critical Issues (Fixed)
 
@@ -528,6 +568,7 @@ Developed as a Spring Boot learning project.
 - ✅ Created `ErrorResponse` DTO instead of using `Map<String, Object>`
 - ✅ Added OpenAPI/Swagger documentation
 - ✅ Added API versioning (`/api/v1/` prefix)
+- ✅ Added database seeder for Users, Movies, and Ratings
 
 ## 🔮 Future Enhancements
 
@@ -542,6 +583,9 @@ Potential improvements:
 - [ ] Add rate limiting
 - [ ] Implement soft delete for users/movies
 - [ ] Add audit logging for data changes
+- [ ] Add movie search by title, director, or year
+- [ ] Add user rating history endpoint
+- [ ] Add average rating calculation for movies
 
 ## 📞 Support
 
@@ -550,5 +594,3 @@ For issues and questions, please open an issue in the repository.
 ---
 
 **Happy Coding! 🎉**
-
-## ✅ Completed Improvements
