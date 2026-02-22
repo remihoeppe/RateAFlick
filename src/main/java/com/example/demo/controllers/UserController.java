@@ -3,6 +3,7 @@ package com.example.demo.controllers;
 import com.example.demo.DTOs.CreateUserRequest;
 import com.example.demo.DTOs.PageResponse;
 import com.example.demo.DTOs.UpdateUserRequest;
+import com.example.demo.DTOs.UserListResponse;
 import com.example.demo.DTOs.UserResponse;
 import com.example.demo.services.UserService;
 import jakarta.validation.Valid;
@@ -25,7 +26,7 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<PageResponse<UserResponse>> getAllUsers(
+    public ResponseEntity<PageResponse<UserListResponse>> getAllUsers(
             @PageableDefault(size = 20, sort = "id") Pageable pageable) {
         return ResponseEntity.ok(userService.findAllUsers(pageable));
     }

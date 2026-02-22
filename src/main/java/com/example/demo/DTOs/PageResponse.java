@@ -2,6 +2,8 @@ package com.example.demo.DTOs;
 
 import org.springframework.data.domain.Page;
 
+import com.example.demo.repositories.UserListProjection;
+
 import java.util.List;
 
 /**
@@ -19,8 +21,7 @@ public record PageResponse<T>(
         int size,
         boolean first,
         boolean last,
-        int numberOfElements
-) {
+        int numberOfElements) {
     public static <T> PageResponse<T> of(Page<T> page) {
         return new PageResponse<>(
                 page.getContent(),
@@ -30,7 +31,7 @@ public record PageResponse<T>(
                 page.getSize(),
                 page.isFirst(),
                 page.isLast(),
-                page.getNumberOfElements()
-        );
+                page.getNumberOfElements());
     }
+
 }

@@ -4,14 +4,17 @@ import com.example.demo.DTOs.CreateUserRequest;
 import com.example.demo.DTOs.PageResponse;
 import com.example.demo.DTOs.RatingResponse;
 import com.example.demo.DTOs.UpdateUserRequest;
+import com.example.demo.DTOs.UserListResponse;
 import com.example.demo.DTOs.UserResponse;
 import com.example.demo.exception.EmailAlreadyExistsException;
 import com.example.demo.models.Rating;
 import com.example.demo.models.User;
+import com.example.demo.repositories.UserListProjection;
 import com.example.demo.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,7 +58,7 @@ public class UserService {
 
     // READ with ratings - returns DTO with ratings
     public UserResponse findUserByIdWithRatings(Long id) {
-        User user = userRepo.findById(id).orElseThrow(
+        User user = userRepo.findByIdWithRatings(id).orElseThrow(
                 () -> new EntityNotFoundException(String.format(
                         "User with ID: %d, was not found", id)));
         return mapToResponseWithRatings(user);
@@ -65,10 +68,22 @@ public class UserService {
         return userRepo.findAll().stream().map(this::mapToResponse).toList();
     }
 
-    public PageResponse<UserResponse> findAllUsers(Pageable pageable) {
-        logger.debug("Finding all users with pagination: page={}, size={}", 
+    public PageResponse<UserListResponse> findAllUsers(Pageable pageable) {
+        logger.debug("Finding all users with pagination: page={}, size={}",
                 pageable.getPageNumber(), pageable.getPageSize());
-        return PageResponse.of(userRepo.findAll(pageable).map(this::mapToResponse));
+        Page<UserListProjection> page = userRepo.findAllBy(pageable);
+        List<UserListResponse> content = page.getContent().stream()
+                .map(p -> new UserListResponse(p.getId(), p.getName(), p.getEmail()))
+                .toList();
+        return new PageResponse<>(
+                content,
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.getNumber(),
+                page.getSize(),
+                page.isFirst(),
+                page.isLast(),
+                content.size());
     }
 
     // UPDATE - Partial update: only updates fields that are provided (non-null and

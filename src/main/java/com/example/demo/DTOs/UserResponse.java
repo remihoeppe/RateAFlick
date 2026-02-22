@@ -8,12 +8,12 @@ public class UserResponse {
     private String email;
     private List<RatingResponse> ratings;
 
-    // Constructor without ratings (for backward compatibility)
+    /** For list endpoint: id, name, email only; ratings are not loaded. */
     public UserResponse(Long id, String name, String email) {
         this.id = id;
         this.name = name;
         this.email = email;
-        this.ratings = null;
+        this.ratings = List.of();
     }
 
     // Constructor with ratings
