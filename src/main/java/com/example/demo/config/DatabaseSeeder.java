@@ -1,6 +1,7 @@
 package com.example.demo.config;
 
 import com.example.demo.config.seed.*;
+import com.example.demo.repositories.ActorRepository;
 import com.example.demo.repositories.DirectorRepository;
 import com.example.demo.repositories.MovieRepository;
 import com.example.demo.repositories.RatingRepository;
@@ -33,9 +34,11 @@ public class DatabaseSeeder {
             UserRepository userRepository,
             MovieRepository movieRepository,
             DirectorRepository directorRepository,
+            ActorRepository actorRepository,
             RatingRepository ratingRepository,
             UserSeeder userSeeder,
             DirectorSeeder directorSeeder,
+            ActorSeeder actorSeeder,
             MovieSeeder movieSeeder,
             RatingSeeder ratingSeeder,
             SchemaReset schemaReset,
@@ -56,6 +59,7 @@ public class DatabaseSeeder {
             userSeeder.seed(userRepository);
             directorSeeder.seed(directorRepository);
             movieSeeder.seed(movieRepository, directorRepository);
+            actorSeeder.seed(actorRepository, movieRepository);
             ratingSeeder.seed(userRepository, movieRepository, ratingRepository);
             logger.info("Database seeding completed successfully!");
         };

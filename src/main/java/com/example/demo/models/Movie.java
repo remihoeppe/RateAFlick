@@ -19,7 +19,12 @@ public class Movie {
     private Director director;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    private List<Actor> actors;
+    @JoinTable(
+            name = "movie_actors",
+            joinColumns = @JoinColumn(name = "movie_id"),
+            inverseJoinColumns = @JoinColumn(name = "actor_id")
+    )
+    private List<Actor> actors = new ArrayList<>();
 
     @OneToMany(mappedBy = "movie", fetch = FetchType.LAZY)
     private List<Rating> ratings;

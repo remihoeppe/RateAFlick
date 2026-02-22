@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity(name = "Actors")
+@Table(name = "actors")
 @PrimaryKeyJoinColumn(name = "artist_id")
 public class Actor extends Artist {
 

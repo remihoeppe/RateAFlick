@@ -10,8 +10,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface MovieRepository extends JpaRepository<Movie, Long> {
+
+    Optional<Movie> findByTitleAndReleaseYear(String title, int releaseYear);
 
     /**
      * Fetches movies by IDs with ratings and director loaded in one query (avoids
