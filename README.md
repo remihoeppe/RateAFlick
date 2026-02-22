@@ -11,12 +11,13 @@ A RESTful Spring Boot API for managing users, movies, and ratings. This applicat
 - **RESTful API**: Clean REST endpoints following best practices with API versioning
 - **Database Integration**: MySQL database with JPA/Hibernate ORM
 - **DTO Pattern**: Data Transfer Objects for request/response handling
-- **Pagination**: Paginated endpoints for listing users and ratings
+- **Pagination**: Paginated endpoints for listing users, movies, and ratings (`PageResponse<T>`)
 - **API Documentation**: OpenAPI/Swagger documentation for interactive API exploration
 - **Error Handling**: Structured error responses with proper HTTP status codes
 - **Transaction Management**: All data-modifying operations are transactional
 - **Logging**: Comprehensive logging using SLF4J
-- **Database Seeder**: Automatic population of sample data for development and testing
+- **Request timing**: Request duration logged per request (method, path, duration in ms)
+- **Database Seeder**: Automatic population of sample data (users, directors, movies, ratings) with optional drop-and-reseed
 
 ## 📋 Prerequisites
 
@@ -52,8 +53,9 @@ The `GET /api/v1/movies` endpoint was optimized from **~4000 ms** to **~350 ms**
 3. **Single native query for the list** – One native SQL query returns the full list page: movie fields, director name (via joins to `directors` and `artists`), and `ratings_avg` (via a scalar subquery). Pagination uses Spring’s `Pageable` and a separate `countQuery`, so the list runs in **two round-trips** (count + page) instead of many.
 
 **Relevant code**
-- `MovieRepository.findMovieListPage(Pageable)` – native query joining `movies`, `directors`, `artists` and a subquery for `AVG(score)` from `ratings`.
-- `MovieService.findAllMovies(Pageable)` – calls `findMovieListPage`, maps each row to `MovieResponse` (including `ratingsAvg`), and builds `PageResponse`.
+- `MovieRepository.findMovieListPage(Pageable)` – native query joining `movies`, `directors`, `artists` and a scalar subquery for `AVG(score)` from `ratings`.
+- `MovieService.findAllMovies(Pageable)` – calls `findMovieListPage`, maps each row to `MovieResponse` (including `ratingsAvg`), and returns `PageResponse<MovieResponse>`.
+- Creating a movie uses `CreateMovieRequest.directorId` (optional); `MovieService` and `DirectorRepository` resolve the director entity.
 
 ## 📦 Project Structure
 
@@ -65,7 +67,8 @@ spring-api/
 │   │   │   ├── controllers/        # REST controllers
 │   │   │   │   ├── UserController.java
 │   │   │   │   ├── MovieController.java
-│   │   │   │   └── RatingController.java
+│   │   │   │   ├── RatingController.java
+│   │   │   │   └── FaviconController.java
 │   │   │   ├── services/            # Business logic layer
 │   │   │   │   ├── UserService.java
 │   │   │   │   ├── MovieService.java
@@ -73,16 +76,26 @@ spring-api/
 │   │   │   ├── repositories/        # Data access layer
 │   │   │   │   ├── UserRepository.java
 │   │   │   │   ├── MovieRepository.java
-│   │   │   │   └── RatingRepository.java
+│   │   │   │   ├── RatingRepository.java
+│   │   │   │   ├── ArtistRepository.java
+│   │   │   │   ├── DirectorRepository.java
+│   │   │   │   └── ActorRepository.java
 │   │   │   ├── models/              # Entity models
 │   │   │   │   ├── User.java
 │   │   │   │   ├── Movie.java
-│   │   │   │   └── Rating.java
+│   │   │   │   ├── Rating.java
+│   │   │   │   ├── Artist.java      # Base for Director/Actor (JOINED inheritance)
+│   │   │   │   ├── Director.java
+│   │   │   │   └── Actor.java
 │   │   │   ├── DTOs/                # Data Transfer Objects
 │   │   │   │   ├── CreateUserRequest.java
 │   │   │   │   ├── UpdateUserRequest.java
 │   │   │   │   ├── UserResponse.java
 │   │   │   │   ├── CreateMovieRequest.java
+│   │   │   │   ├── MovieResponse.java
+│   │   │   │   ├── MovieRatings.java
+│   │   │   │   ├── MovieRatingSummary.java
+│   │   │   │   ├── PageResponse.java
 │   │   │   │   ├── CreateRatingRequest.java
 │   │   │   │   ├── RatingResponse.java
 │   │   │   │   └── ErrorResponse.java
@@ -92,9 +105,17 @@ spring-api/
 │   │   │   │   └── DuplicateRatingException.java
 │   │   │   ├── config/              # Configuration
 │   │   │   │   ├── OpenApiConfig.java
-│   │   │   │   └── DatabaseSeeder.java
+│   │   │   │   ├── RequestTimingFilter.java
+│   │   │   │   ├── DatabaseSeeder.java
+│   │   │   │   └── seed/
+│   │   │   │       ├── SchemaReset.java
+│   │   │   │       ├── UserSeeder.java
+│   │   │   │       ├── DirectorSeeder.java
+│   │   │   │       ├── MovieSeeder.java
+│   │   │   │       ├── RatingSeeder.java
+│   │   │   │       └── *SeedData.java (UserSeedData, DirectorSeedData, etc.)
 │   │   │   ├── SpringSqlApiApplication.java
-│   │   │   └── PingPong.java
+│   │   │   └── PingPong.java       # /, /ping, /welcome
 │   │   └── resources/
 │   │       └── application.properties
 │   └── test/
@@ -104,17 +125,21 @@ spring-api/
 
 ## 🗄️ Database Schema
 
-The application uses three main entities with the following relationships:
+The application uses the following entities and relationships:
 
 - **Users**: User accounts with name and email (email must be unique)
-- **Movies**: Movie catalog with title, release year, director, and language
-- **Ratings**: User ratings for movies (Many-to-One relationship with both Users and Movies)
-    - Unique constraint: A user can only rate a movie once (enforced by unique constraint on `user_id` and `movie_id`)
+- **Artists**: Base entity for people (name). Uses **JOINED inheritance**: subclasses have their own tables with a PK that references `artists`.
+- **Directors**: Subclass of Artist; directors are linked to movies via `movies.director_id`.
+- **Actors**: Subclass of Artist; many-to-many with movies via `movie_actors` join table.
+- **Movies**: Movie catalog with title, release year, language, optional director (FK to `directors`), and many-to-many actors.
+- **Ratings**: User ratings for movies (Many-to-One with Users and Movies). One rating per user per movie.
 
 ### Entity Relationships
 
 ```
 User (1) ────< (Many) Rating (Many) >─── (1) Movie
+Artist (base) ──< Director (1) ────< (Many) Movie
+                Actor (Many) <───> (Many) Movie  [movie_actors]
 ```
 
 ### Database Constraints
@@ -139,40 +164,33 @@ spring.jpa.hibernate.show_sql=true
 
 # Database Seeder Configuration
 app.seeder.enabled=true
+# When true, drops all tables and recreates them before seeding (use with caution)
+app.seeder.drop-and-reseed=false
 ```
 
 **Note**: The current configuration uses Railway MySQL database. Update these values for your local or production environment.
 
 ### Database Seeder
 
-The application includes a database seeder that automatically populates the database with sample data on startup (when enabled). The seeder will:
+The application includes a database seeder that automatically populates the database with sample data on startup (when enabled). Seeding is split into dedicated components under `config/seed/`:
 
-- Create 8 sample users with various names and emails
-- Create 15 sample movies from different genres and languages
-- Create ~35 sample ratings linking users to movies with diverse scores (7-10)
-- Only run if the database is empty (won't duplicate existing data)
-- Automatically disabled in production profile
-
-**Rating Seeder Details:**
-
-- Creates ratings for various user-movie combinations
-- Scores range from 7 to 10 (realistic rating distribution)
-- Respects the unique constraint (one rating per user per movie)
-- Only seeds if users and movies already exist
+- **UserSeeder** – Creates sample users from `UserSeedData`
+- **DirectorSeeder** – Creates sample directors from `DirectorSeedData`
+- **MovieSeeder** – Creates sample movies (with director links) from `MovieSeedData`
+- **RatingSeeder** – Creates sample ratings from `RatingSeedData` (user–movie–score)
 
 **Configuration:**
 
-- `app.seeder.enabled=true` - Enable/disable the seeder (default: true)
-- The seeder runs automatically on application startup (except in `prod` profile)
+- `app.seeder.enabled=true` – Enable/disable the seeder (default: true)
+- `app.seeder.drop-and-reseed=false` – When `true`, drops all tables, recreates the schema from JPA entities, then runs the seeders (use with caution; useful for a clean dev reset)
+
+The seeder runs automatically on application startup and is **disabled when the `prod` Spring profile is active**.
 
 **To disable the seeder:**
 
 ```properties
 app.seeder.enabled=false
 ```
-
-**To disable in production:**
-The seeder is automatically disabled when running with the `prod` Spring profile.
 
 ## 🚀 Getting Started
 
@@ -234,11 +252,12 @@ Once the application is running, you can access:
 
 ### Health Check & Welcome
 
-| Method | Endpoint   | Description                   |
-| ------ | ---------- | ----------------------------- |
-| GET    | `/`        | Welcome message               |
-| GET    | `/ping`    | Health check (returns "pong") |
-| GET    | `/welcome` | HTML welcome page             |
+| Method | Endpoint       | Description                     |
+| ------ | -------------- | ------------------------------- |
+| GET    | `/`            | Welcome message                 |
+| GET    | `/ping`        | Health check (returns "pong")   |
+| GET    | `/welcome`     | HTML welcome page               |
+| GET    | `/favicon.ico` | Returns 204 No Content (avoids 404 in logs) |
 
 ### User Endpoints
 
@@ -285,10 +304,17 @@ Once the application is running, you can access:
 
 ### Movie Endpoints
 
-| Method | Endpoint              | Description        | Request Body         |
-| ------ | --------------------- | ------------------ | -------------------- |
-| GET    | `/api/v1/movies/{id}` | Get movie by ID    | -                    |
-| POST   | `/api/v1/movies`      | Create a new movie | `CreateMovieRequest` |
+| Method | Endpoint              | Description                    | Request Body         |
+| ------ | --------------------- | ------------------------------ | -------------------- |
+| GET    | `/api/v1/movies`      | Get all movies (paginated)     | -                    |
+| GET    | `/api/v1/movies/{id}` | Get movie by ID                | -                    |
+| POST   | `/api/v1/movies`      | Create a new movie             | `CreateMovieRequest` |
+
+**Pagination Parameters** (for GET `/api/v1/movies`):
+
+- `page` (default: 0): Page number (0-indexed)
+- `size` (default: 20): Number of items per page
+- `sort` (default: id): Sort field(s)
 
 ### Rating Endpoints
 
@@ -307,15 +333,19 @@ Once the application is running, you can access:
 
 #### Create Movie Request Example
 
+The `directorId` is optional; omit it or set to `null` for a movie with no director. If provided, it must be the ID of an existing Director.
+
 ```json
 {
     "title": "Inception",
     "releaseYear": 2010,
-    "director": "Christopher Nolan"
+    "directorId": 1
 }
 ```
 
 #### Movie Response Example
+
+Used for both GET by ID and each item in the paginated list. The list endpoint includes `ratingsAvg`; GET by ID may have it as `null`.
 
 ```json
 {
@@ -323,8 +353,8 @@ Once the application is running, you can access:
     "title": "Inception",
     "releaseYear": 2010,
     "director": "Christopher Nolan",
-    "language": null,
-    "ratings": []
+    "language": "en",
+    "ratingsAvg": 8.5
 }
 ```
 
@@ -361,7 +391,7 @@ Once the application is running, you can access:
 
 - **Title**: Required, 3-100 characters
 - **Release Year**: Required, must be between 1888 and 2100
-- **Director**: Optional, max 100 characters
+- **Director ID**: Optional; if provided, must be the ID of an existing Director
 - **ID**: Must be >= 1 (path variable validation)
 
 ### Rating Validation
@@ -430,7 +460,21 @@ curl -X PUT http://localhost:8080/api/v1/users/1 \
   }'
 ```
 
+### Get All Movies (Paginated)
+
+```bash
+curl "http://localhost:8080/api/v1/movies?page=0&size=20"
+```
+
+### Get Movie by ID
+
+```bash
+curl http://localhost:8080/api/v1/movies/1
+```
+
 ### Create a Movie
+
+Use an existing director ID from the seeded data, or omit `directorId` for no director.
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/movies \
@@ -438,14 +482,8 @@ curl -X POST http://localhost:8080/api/v1/movies \
   -d '{
     "title": "The Matrix",
     "releaseYear": 1999,
-    "director": "The Wachowskis"
+    "directorId": 1
   }'
-```
-
-### Get Movie by ID
-
-```bash
-curl http://localhost:8080/api/v1/movies/1
 ```
 
 ### Create a Rating
@@ -479,8 +517,10 @@ The application follows a layered architecture:
 1. **Controller Layer**: Handles HTTP requests and responses
 2. **Service Layer**: Contains business logic
 3. **Repository Layer**: Data access using Spring Data JPA
-4. **Model Layer**: JPA entities representing database tables
-5. **DTO Layer**: Data Transfer Objects for API communication
+4. **Model Layer**: JPA entities representing database tables (including JOINED inheritance for Artist/Director/Actor)
+5. **DTO Layer**: Data Transfer Objects for API communication (including `PageResponse<T>` for paginated results)
+
+**Request pipeline**: `RequestTimingFilter` runs first (highest precedence), logging method, path, and duration in ms for every request.
 
 ## 🔒 Security Notes
 
@@ -508,8 +548,8 @@ The application uses a centralized `GlobalExceptionHandler` with structured `Err
 
 - **400 Bad Request**:
     - Validation failures (includes field-level errors)
-    - Invalid arguments (e.g., empty strings, whitespace-only values)
-- **404 Not Found**: When a user, movie, or rating ID doesn't exist
+    - Invalid arguments (e.g., empty strings, whitespace-only values; handled via `IllegalArgumentException`)
+- **404 Not Found**: When a user, movie, rating, or director (e.g. when creating a movie with `directorId`) doesn't exist
 - **409 Conflict**:
     - When attempting to create a user with an existing email
     - When attempting to create a duplicate rating (user already rated the movie)
@@ -586,24 +626,29 @@ Developed as a Spring Boot learning project.
 - ✅ Created `ErrorResponse` DTO instead of using `Map<String, Object>`
 - ✅ Added OpenAPI/Swagger documentation
 - ✅ Added API versioning (`/api/v1/` prefix)
-- ✅ Added database seeder for Users, Movies, and Ratings
+- ✅ Added database seeder for Users, Directors, Movies, and Ratings (modular seeders and seed data classes)
+- ✅ Added optional drop-and-reseed mode (`app.seeder.drop-and-reseed`) with `SchemaReset`
+- ✅ Added GET `/api/v1/movies` paginated list with `ratingsAvg` (optimized native query)
+- ✅ Introduced Artist/Director/Actor entities (JOINED inheritance); movies reference Director by ID
+- ✅ Create movie request uses optional `directorId` instead of director name string
+- ✅ Added `PageResponse<T>` for stable paginated API responses
+- ✅ Added `RequestTimingFilter` for per-request duration logging
+- ✅ Added `FaviconController` (GET `/favicon.ico` → 204) to avoid 404 in logs
 
 ## 🔮 Future Enhancements
 
 Potential improvements:
 
 - [ ] Add authentication and authorization (Spring Security)
-- [ ] Add search and filtering capabilities
+- [ ] Add search and filtering capabilities (e.g. movie by title, director, year)
 - [ ] Add unit and integration tests
 - [ ] Implement caching strategies
-- [ ] Add request/response logging middleware
 - [ ] Support for multiple database types
 - [ ] Add rate limiting
 - [ ] Implement soft delete for users/movies
 - [ ] Add audit logging for data changes
-- [ ] Add movie search by title, director, or year
 - [ ] Add user rating history endpoint
-- [ ] Add average rating calculation for movies
+- [ ] Expose full ratings list per movie (e.g. GET `/api/v1/movies/{id}/ratings`) using `MovieRatings` / `MovieRatingSummary`
 
 ## 📞 Support
 
