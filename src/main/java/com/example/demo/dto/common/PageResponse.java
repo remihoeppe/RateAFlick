@@ -1,6 +1,7 @@
 package com.example.demo.dto.common;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -30,5 +31,21 @@ public record PageResponse<T>(
                 page.isFirst(),
                 page.isLast(),
                 page.getNumberOfElements());
+    }
+
+    /** Build from content + total (single round-trip). Use when the repository returns list + total in one query. */
+    public static <T> PageResponse<T> from(List<T> content, long total, Pageable pageable) {
+        int size = pageable.getPageSize();
+        int totalPages = size > 0 ? (int) Math.ceil((double) total / size) : 0;
+        int number = pageable.getPageNumber();
+        return new PageResponse<>(
+                content,
+                total,
+                totalPages,
+                number,
+                size,
+                number == 0,
+                number >= totalPages - 1,
+                content.size());
     }
 }

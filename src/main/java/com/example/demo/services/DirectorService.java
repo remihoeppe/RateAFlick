@@ -9,6 +9,7 @@ import com.example.demo.repositories.DirectorRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -27,26 +28,18 @@ public class DirectorService {
         public PageResponse<DirectorListResponse> findAllDirectors(Pageable pageable) {
                 logger.debug("Finding all directors with pagination: page={}, size={}",
                                 pageable.getPageNumber(), pageable.getPageSize());
-                List<Object[]> rows = directorRepo.findDirectorListPage(pageable);
-                List<DirectorListResponse> content = rows.stream()
-                                .map(row -> new DirectorListResponse(
-                                                ((Number) row[0]).longValue(),
-                                                (String) row[1]))
+                Page<Director> page = directorRepo.findAll(pageable);
+                List<DirectorListResponse> content = page.getContent().stream()
+                                .map(d -> new DirectorListResponse(d.getId(), d.getName()))
                                 .toList();
-                long total = rows.isEmpty()
-                                ? (pageable.getPageNumber() == 0 ? 0 : directorRepo.count())
-                                : ((Number) rows.get(0)[2]).longValue();
-                int size = pageable.getPageSize();
-                int totalPages = size > 0 ? (int) Math.ceil((double) total / size) : 0;
-                int number = pageable.getPageNumber();
                 return new PageResponse<>(
                                 content,
-                                total,
-                                totalPages,
-                                number,
-                                size,
-                                number == 0,
-                                number >= totalPages - 1,
+                                page.getTotalElements(),
+                                page.getTotalPages(),
+                                page.getNumber(),
+                                page.getSize(),
+                                page.isFirst(),
+                                page.isLast(),
                                 content.size());
         }
 

@@ -31,7 +31,6 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 
     /**
      * Single query for list page: movie fields + director name + ratings avg.
-     * Pagination is applied by Spring via Pageable (no LIMIT/OFFSET in SQL).
      * Row: [id, title, release_year, language, director_name, ratings_avg].
      */
     @Query(value = "SELECT m.id, m.title, m.release_year, m.language, a.name AS director_name, "

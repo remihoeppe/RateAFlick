@@ -15,8 +15,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
     /**
-     * List endpoint: only selects id, name, email (no ratings). Avoids loading
-     * the ratings association and reduces data transfer.
+     * List endpoint: only selects id, name, email (no ratings).
      */
     Page<UserListProjection> findAllBy(Pageable pageable);
 

@@ -68,19 +68,7 @@ public class MovieService {
     public PageResponse<MovieResponse> findAllMovies(Pageable pageable) {
         logger.debug("Finding all movies with pagination: page={}, size={}",
                 pageable.getPageNumber(), pageable.getPageSize());
-        Page<Object[]> page = movieRepo.findMovieListPage(pageable);
-        List<MovieResponse> content = page.getContent().stream()
-                .map(this::rowToMovieResponse)
-                .toList();
-        return new PageResponse<>(
-                content,
-                page.getTotalElements(),
-                page.getTotalPages(),
-                page.getNumber(),
-                page.getSize(),
-                page.isFirst(),
-                page.isLast(),
-                content.size());
+        return PageResponse.of(movieRepo.findMovieListPage(pageable).map(this::rowToMovieResponse));
     }
 
     /** Map native query row [id, title, release_year, language, director_name, ratings_avg] to MovieResponse. */

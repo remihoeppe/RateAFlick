@@ -87,7 +87,7 @@ public class RatingService {
     }
 
     public PageResponse<RatingResponse> findAllRatings(Pageable pageable) {
-        logger.debug("Finding all ratings with pagination: page={}, size={}", 
+        logger.debug("Finding all ratings with pagination: page={}, size={}",
                 pageable.getPageNumber(), pageable.getPageSize());
         return PageResponse.of(ratingRepo.findAll(pageable).map(this::mapToResponse));
     }
