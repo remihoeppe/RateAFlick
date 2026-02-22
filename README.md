@@ -84,6 +84,14 @@ The `GET /api/v1/movies` endpoint was optimized from **~4000 ms** to **~350 ms**
 - `MovieService.findAllMovies(Pageable)` – calls `findMovieListPage`, maps each row to `MovieResponse` (including `ratingsAvg`), and returns `PageResponse<MovieResponse>`.
 - Creating a movie uses `CreateMovieRequest.directorId` (optional); `MovieService` and `DirectorRepository` resolve the director entity.
 
+### Performance: Users list endpoint
+
+The `GET /api/v1/users` endpoint stays fast by **not loading ratings** on the list:
+
+- **DTO projection** – `UserRepository.findAllBy(Pageable)` returns `Page<UserListProjection>` (only id, name, email selected from the database).
+- **Response** – The controller returns `PageResponse<UserListResponse>`; each item has no `ratings` field.
+- **Single user with ratings** – Use `GET /api/v1/users/{id}`; `UserRepository.findByIdWithRatings(id)` uses JPQL with `JOIN FETCH` so user, ratings, and movie load in one query.
+
 ## 📦 Project Structure
 
 ```
@@ -295,6 +303,25 @@ Once the application is running, you can access:
 - `size` (default: 20): Number of items per page
 - `sort` (default: id): Sort field(s), e.g., `sort=name,desc`
 
+The list endpoint returns **`UserListResponse`** (id, name, email only; no ratings) for performance. Ratings are only included when fetching a single user by ID.
+
+#### User list response example (GET `/api/v1/users`)
+
+```json
+{
+    "content": [
+        { "id": 1, "name": "John Doe", "email": "john.doe@example.com" }
+    ],
+    "totalElements": 8,
+    "totalPages": 1,
+    "number": 0,
+    "size": 20,
+    "first": true,
+    "last": true,
+    "numberOfElements": 8
+}
+```
+
 #### Create User Request Example
 
 ```json
@@ -304,7 +331,7 @@ Once the application is running, you can access:
 }
 ```
 
-#### User Response Example
+#### User response example (GET `/api/v1/users/{id}` — includes ratings)
 
 ```json
 {
@@ -418,7 +445,7 @@ Used for both GET by ID and each item in the paginated list. The list endpoint i
 
 - **User ID**: Required, must exist
 - **Movie ID**: Required, must exist
-- **Score**: Required, must be a valid integer
+- **Score**: Required, integer between 1 and 10
 - **Unique Constraint**: A user can only rate a movie once (enforced at database and service level)
 - **ID**: Must be >= 1 (path variable validation)
 
@@ -538,7 +565,7 @@ The application follows a layered architecture:
 2. **Service Layer**: Contains business logic
 3. **Repository Layer**: Data access using Spring Data JPA
 4. **Model Layer**: JPA entities representing database tables (including JOINED inheritance for Artist/Director/Actor)
-5. **DTO Layer**: Data Transfer Objects for API communication (including `PageResponse<T>` for paginated results)
+5. **DTO Layer**: Data Transfer Objects organised by domain (`dto/common`, `dto/user`, `dto/movie`, `dto/rating`) for API request/response handling (including `PageResponse<T>` for paginated results)
 
 **Request pipeline**: `RequestTimingFilter` runs first (highest precedence), logging method, path, and duration in ms for every request.
 
@@ -553,7 +580,7 @@ The application follows a layered architecture:
 
 ## 🐛 Error Handling
 
-The application uses a centralized `GlobalExceptionHandler` with structured `ErrorResponse` DTOs. All errors follow a consistent format:
+The application uses a centralized `GlobalExceptionHandler` with structured `ErrorResponse` DTOs (`dto.common.ErrorResponse`). All errors follow a consistent format:
 
 ```json
 {
@@ -654,6 +681,9 @@ Developed as a Spring Boot learning project.
 - ✅ Added `PageResponse<T>` for stable paginated API responses
 - ✅ Added `RequestTimingFilter` for per-request duration logging
 - ✅ Added `FaviconController` (GET `/favicon.ico` → 204) to avoid 404 in logs
+- ✅ Users list (GET `/api/v1/users`) uses DTO projection (`UserListProjection` → `UserListResponse`); returns only id, name, email (no ratings) for fast response
+- ✅ GET user by ID uses `findByIdWithRatings` (JPQL with JOIN FETCH) so ratings and movie load in one query
+- ✅ DTOs restructured by domain: `dto/common`, `dto/user`, `dto/movie`, `dto/rating`
 
 ## 🔮 Future Enhancements
 
