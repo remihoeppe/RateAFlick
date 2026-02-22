@@ -10,7 +10,7 @@ import java.util.List;
 @PrimaryKeyJoinColumn(name = "artist_id")
 public class Director extends Artist {
 
-    @OneToMany(mappedBy = "director")
+    @OneToMany(mappedBy = "director", fetch = FetchType.LAZY)
     private List<Movie> movies = new ArrayList<>();
 
     public Director() {

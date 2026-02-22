@@ -103,11 +103,13 @@ spring-api/
 │   │   │   │   ├── UserController.java
 │   │   │   │   ├── MovieController.java
 │   │   │   │   ├── RatingController.java
+│   │   │   │   ├── DirectorController.java
 │   │   │   │   └── FaviconController.java
 │   │   │   ├── services/            # Business logic layer
 │   │   │   │   ├── UserService.java
 │   │   │   │   ├── MovieService.java
-│   │   │   │   └── RatingService.java
+│   │   │   │   ├── RatingService.java
+│   │   │   │   └── DirectorService.java
 │   │   │   ├── repositories/        # Data access layer
 │   │   │   │   ├── UserRepository.java
 │   │   │   │   ├── MovieRepository.java
@@ -126,7 +128,8 @@ spring-api/
 │   │   │   │   ├── common/          # PageResponse, ErrorResponse
 │   │   │   │   ├── user/            # CreateUserRequest, UpdateUserRequest, UserResponse, UserListResponse
 │   │   │   │   ├── movie/           # CreateMovieRequest, MovieResponse, MovieRatings, MovieRatingSummary
-│   │   │   │   └── rating/          # CreateRatingRequest, RatingResponse
+│   │   │   │   ├── rating/          # CreateRatingRequest, RatingResponse
+│   │   │   │   └── director/        # DirectorResponse, DirectorListResponse, DirectorMovieSummary
 │   │   │   ├── exception/           # Exception handling
 │   │   │   │   ├── GlobalExceptionHandler.java
 │   │   │   │   ├── EmailAlreadyExistsException.java
@@ -349,6 +352,19 @@ The list endpoint returns **`UserListResponse`** (id, name, email only; no ratin
 }
 ```
 
+### Director Endpoints (Artist layer)
+
+| Method | Endpoint                    | Description                |
+| ------ | --------------------------- | -------------------------- |
+| GET    | `/api/v1/directors`         | Get all directors (paginated) |
+| GET    | `/api/v1/directors/{id}`    | Get director by ID (with movies) |
+
+**Pagination Parameters** (for GET `/api/v1/directors`):
+
+- `page` (default: 0), `size` (default: 20), `sort` (default: id)
+
+List returns **DirectorListResponse** (id and name only; no `movies` field). GET by ID returns **DirectorResponse** with a `movies` array (id, title).
+
 ### Movie Endpoints
 
 | Method | Endpoint              | Description                    | Request Body         |
@@ -505,6 +521,18 @@ curl -X PUT http://localhost:8080/api/v1/users/1 \
   -d '{
     "email": "jane.doe@example.com"
   }'
+```
+
+### Get All Directors (Paginated)
+
+```bash
+curl "http://localhost:8080/api/v1/directors?page=0&size=20"
+```
+
+### Get Director by ID
+
+```bash
+curl http://localhost:8080/api/v1/directors/1
 ```
 
 ### Get All Movies (Paginated)
