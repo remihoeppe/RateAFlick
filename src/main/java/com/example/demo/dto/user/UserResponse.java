@@ -1,4 +1,6 @@
-package com.example.demo.DTOs;
+package com.example.demo.dto.user;
+
+import com.example.demo.dto.rating.RatingResponse;
 
 import java.util.List;
 
@@ -16,7 +18,6 @@ public class UserResponse {
         this.ratings = List.of();
     }
 
-    // Constructor with ratings
     public UserResponse(Long id, String name, String email, List<RatingResponse> ratings) {
         this.id = id;
         this.name = name;

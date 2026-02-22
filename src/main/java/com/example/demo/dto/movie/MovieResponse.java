@@ -1,4 +1,4 @@
-package com.example.demo.DTOs;
+package com.example.demo.dto.movie;
 
 public class MovieResponse {
     private Long id;

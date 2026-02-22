@@ -1,4 +1,4 @@
-package com.example.demo.DTOs;
+package com.example.demo.dto.rating;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

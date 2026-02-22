@@ -1,4 +1,4 @@
-package com.example.demo.DTOs;
+package com.example.demo.dto.movie;
 
 /**
  * Rating summary when embedded in a movie response. Omits movie id/title to avoid repetition.

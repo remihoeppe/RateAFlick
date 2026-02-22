@@ -1,11 +1,11 @@
 package com.example.demo.services;
 
-import com.example.demo.DTOs.CreateUserRequest;
-import com.example.demo.DTOs.PageResponse;
-import com.example.demo.DTOs.RatingResponse;
-import com.example.demo.DTOs.UpdateUserRequest;
-import com.example.demo.DTOs.UserListResponse;
-import com.example.demo.DTOs.UserResponse;
+import com.example.demo.dto.common.PageResponse;
+import com.example.demo.dto.rating.RatingResponse;
+import com.example.demo.dto.user.CreateUserRequest;
+import com.example.demo.dto.user.UpdateUserRequest;
+import com.example.demo.dto.user.UserListResponse;
+import com.example.demo.dto.user.UserResponse;
 import com.example.demo.exception.EmailAlreadyExistsException;
 import com.example.demo.models.Rating;
 import com.example.demo.models.User;

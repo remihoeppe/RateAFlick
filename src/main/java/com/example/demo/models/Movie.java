@@ -15,16 +15,13 @@ public class Movie {
     private int releaseYear;
     private String language;
 
-    @ManyToOne
-    @JoinColumn(name = "director_id")
+    @ManyToOne(fetch = FetchType.LAZY)
     private Director director;
 
-    @ManyToMany
-    @JoinTable(name = "movie_actors", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "actor_id"))
-    private List<Actor> actors = new ArrayList<Actor>();
+    @ManyToMany(fetch = FetchType.LAZY)
+    private List<Actor> actors;
 
-    // One Movie -> Many Ratings
-    @OneToMany(mappedBy = "movie")
+    @OneToMany(mappedBy = "movie", fetch = FetchType.LAZY)
     private List<Rating> ratings;
 
     public String getLanguage() {

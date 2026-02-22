@@ -1,6 +1,6 @@
 package com.example.demo.exception;
 
-import com.example.demo.DTOs.ErrorResponse;
+import com.example.demo.dto.common.ErrorResponse;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

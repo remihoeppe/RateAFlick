@@ -1,10 +1,11 @@
 package com.example.demo.controllers;
 
-import com.example.demo.DTOs.CreateUserRequest;
-import com.example.demo.DTOs.PageResponse;
-import com.example.demo.DTOs.UpdateUserRequest;
-import com.example.demo.DTOs.UserListResponse;
-import com.example.demo.DTOs.UserResponse;
+import com.example.demo.dto.common.PageResponse;
+import com.example.demo.dto.user.CreateUserRequest;
+import com.example.demo.dto.user.UpdateUserRequest;
+import com.example.demo.dto.user.UserListResponse;
+import com.example.demo.dto.user.UserResponse;
+import com.example.demo.repositories.UserRepository;
 import com.example.demo.services.UserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -43,7 +44,8 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable @Min(1) Long id, @Valid @RequestBody UpdateUserRequest updateUserRequest) {
+    public ResponseEntity<UserResponse> updateUser(@PathVariable @Min(1) Long id,
+            @Valid @RequestBody UpdateUserRequest updateUserRequest) {
         UserResponse updatedUser = userService.updateUser(id, updateUserRequest);
         return ResponseEntity.ok(updatedUser);
     }

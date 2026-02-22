@@ -114,18 +114,11 @@ spring-api/
 │   │   │   │   ├── Artist.java      # Base for Director/Actor (JOINED inheritance)
 │   │   │   │   ├── Director.java
 │   │   │   │   └── Actor.java
-│   │   │   ├── DTOs/                # Data Transfer Objects
-│   │   │   │   ├── CreateUserRequest.java
-│   │   │   │   ├── UpdateUserRequest.java
-│   │   │   │   ├── UserResponse.java
-│   │   │   │   ├── CreateMovieRequest.java
-│   │   │   │   ├── MovieResponse.java
-│   │   │   │   ├── MovieRatings.java
-│   │   │   │   ├── MovieRatingSummary.java
-│   │   │   │   ├── PageResponse.java
-│   │   │   │   ├── CreateRatingRequest.java
-│   │   │   │   ├── RatingResponse.java
-│   │   │   │   └── ErrorResponse.java
+│   │   │   ├── dto/                 # Data Transfer Objects (by domain)
+│   │   │   │   ├── common/          # PageResponse, ErrorResponse
+│   │   │   │   ├── user/            # CreateUserRequest, UpdateUserRequest, UserResponse, UserListResponse
+│   │   │   │   ├── movie/           # CreateMovieRequest, MovieResponse, MovieRatings, MovieRatingSummary
+│   │   │   │   └── rating/          # CreateRatingRequest, RatingResponse
 │   │   │   ├── exception/           # Exception handling
 │   │   │   │   ├── GlobalExceptionHandler.java
 │   │   │   │   ├── EmailAlreadyExistsException.java

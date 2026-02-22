@@ -1,8 +1,8 @@
 package com.example.demo.services;
 
-import com.example.demo.DTOs.CreateRatingRequest;
-import com.example.demo.DTOs.PageResponse;
-import com.example.demo.DTOs.RatingResponse;
+import com.example.demo.dto.common.PageResponse;
+import com.example.demo.dto.rating.CreateRatingRequest;
+import com.example.demo.dto.rating.RatingResponse;
 import com.example.demo.exception.DuplicateRatingException;
 import com.example.demo.models.Movie;
 import com.example.demo.models.Rating;

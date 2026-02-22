@@ -1,4 +1,4 @@
-package com.example.demo.DTOs;
+package com.example.demo.dto.user;
 
 /**
  * Response for GET /api/v1/users (list). Only id, name, email — no ratings field.

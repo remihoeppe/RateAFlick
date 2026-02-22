@@ -1,4 +1,4 @@
-package com.example.demo.DTOs;
+package com.example.demo.dto.rating;
 
 public class RatingResponse {
     private Long id;

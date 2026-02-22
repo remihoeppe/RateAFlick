@@ -1,8 +1,8 @@
 package com.example.demo.services;
 
-import com.example.demo.DTOs.CreateMovieRequest;
-import com.example.demo.DTOs.MovieResponse;
-import com.example.demo.DTOs.PageResponse;
+import com.example.demo.dto.common.PageResponse;
+import com.example.demo.dto.movie.CreateMovieRequest;
+import com.example.demo.dto.movie.MovieResponse;
 import com.example.demo.models.Movie;
 import com.example.demo.repositories.DirectorRepository;
 import com.example.demo.repositories.MovieRepository;

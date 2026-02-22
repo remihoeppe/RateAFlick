@@ -1,8 +1,6 @@
-package com.example.demo.DTOs;
+package com.example.demo.dto.common;
 
 import org.springframework.data.domain.Page;
-
-import com.example.demo.repositories.UserListProjection;
 
 import java.util.List;
 
@@ -33,5 +31,4 @@ public record PageResponse<T>(
                 page.isLast(),
                 page.getNumberOfElements());
     }
-
 }
