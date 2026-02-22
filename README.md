@@ -2,6 +2,33 @@
 
 A RESTful Spring Boot API for managing users, movies, and ratings. This application provides endpoints for creating and managing user accounts, movie catalog entries, and user ratings for movies.
 
+## Summary
+
+| Section | Description |
+|--------|-------------|
+| [Features](#-features) | Capabilities and highlights |
+| [Prerequisites](#-prerequisites) | What you need installed |
+| [Technology Stack](#-technology-stack) | Frameworks and tools |
+| [Performance: Movies list](#-performance-movies-list-endpoint) | How the movies list was optimized |
+| [Project Structure](#-project-structure) | Directory and file layout |
+| [Database Schema](#-database-schema) | Entities and relationships |
+| [Configuration](#-configuration) | Database and seeder settings |
+| [Getting Started](#-getting-started) | Clone, configure, run |
+| [API Endpoints](#-api-endpoints) | All REST routes and request/response shapes |
+| [Validation Rules](#-validation-rules) | Input validation per resource |
+| [Testing](#-testing) | How to run tests |
+| [Example API Usage](#-example-api-usage) | `curl` examples |
+| [Architecture](#-architecture) | Layers and request pipeline |
+| [Security Notes](#-security-notes) | Production security considerations |
+| [Error Handling](#-error-handling) | Status codes and error format |
+| [Dependencies](#-dependencies) | Key Maven dependencies |
+| [Contributing](#-contributing) | How to contribute |
+| [License](#-license) | License information |
+| [Author](#-author) | About the project |
+| [Completed Improvements](#-completed-improvements) | Done improvements list |
+| [Future Enhancements](#-future-enhancements) | Possible next steps |
+| [Support](#-support) | Where to get help |
+
 ## 🚀 Features
 
 - **User Management**: Full CRUD operations for user accounts with partial updates
