@@ -2,7 +2,7 @@ package com.example.demo.models;
 
 import jakarta.persistence.*;
 
-@Entity
+@Entity(name = "Ratings")
 @Table(name = "ratings", uniqueConstraints = @UniqueConstraint(columnNames = { "user_id", "movie_id" }))
 public class Rating {
     @Id

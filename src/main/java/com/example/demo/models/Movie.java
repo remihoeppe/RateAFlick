@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import java.util.List;
 import java.util.ArrayList;
 
-@Entity
+@Entity(name = "Movies")
 @Table(name = "movies")
 public class Movie {
     @Id
