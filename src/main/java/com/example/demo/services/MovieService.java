@@ -3,6 +3,7 @@ package com.example.demo.services;
 import com.example.demo.dto.common.PageResponse;
 import com.example.demo.dto.movie.CreateMovieRequest;
 import com.example.demo.dto.movie.MovieActorSummary;
+import com.example.demo.dto.movie.MovieDetailWithActorRow;
 import com.example.demo.dto.movie.MovieResponse;
 import com.example.demo.models.Movie;
 import com.example.demo.repositories.DirectorRepository;
@@ -15,7 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,15 +50,29 @@ public class MovieService {
         return mapToResponse(saved);
     }
 
-    // READ on GET Request - returns DTO with artists (director + actors loaded via JOIN FETCH)
+    // READ on GET Request - single query (one round-trip), projection only
     @Transactional(readOnly = true)
     public MovieResponse find(Long id) {
         logger.debug("Finding movie with ID: {}", id);
-        Movie movie = movieRepo.findByIdWithDirectorAndActors(id).orElseThrow(
-                () -> new EntityNotFoundException(String.format(
-                        "Movie with ID: %d, was not found", id)));
-        logger.debug("Movie.director: {}", movie.getDirector());
-        return mapToResponseWithArtists(movie);
+        List<MovieDetailWithActorRow> rows = movieRepo.findMovieDetailWithActorsById(id);
+        if (rows.isEmpty()) {
+            throw new EntityNotFoundException(String.format("Movie with ID: %d was not found", id));
+        }
+        MovieDetailWithActorRow first = rows.get(0);
+        double avg = first.getRatingsAvg() != null ? first.getRatingsAvg().doubleValue() : 0.0;
+        List<MovieActorSummary> actors = rows.stream()
+                .filter(r -> r.getActorId() != null)
+                .map(r -> new MovieActorSummary(r.getActorId(), r.getActorName()))
+                .distinct()
+                .collect(Collectors.toList());
+        return new MovieResponse(
+                first.getId(),
+                first.getTitle(),
+                first.getReleaseYear(),
+                first.getDirectorName(),
+                first.getLanguage(),
+                avg,
+                actors);
     }
 
     // READ on GET Request - returns DTO with average rating for a movie
@@ -100,27 +114,6 @@ public class MovieService {
                 movie.getReleaseYear(),
                 directorName,
                 movie.getLanguage());
-    }
-
-    // Map Movie to MovieResponse with actors (for GET by id)
-    private MovieResponse mapToResponseWithArtists(Movie movie) {
-        logger.debug("Mapping movie with ID: {} to MovieResponse with artists", movie.getId());
-        logger.debug("Movie.director: {}", movie.getDirector());
-        String directorName = movie.getDirector() != null ? movie.getDirector().getName() : null;
-        double average = getAverageRating(movie);
-        List<MovieActorSummary> actors = movie.getActors() == null
-                ? Collections.emptyList()
-                : movie.getActors().stream()
-                        .map(a -> new MovieActorSummary(a.getId(), a.getName()))
-                        .collect(Collectors.toList());
-        return new MovieResponse(
-                movie.getId(),
-                movie.getTitle(),
-                movie.getReleaseYear(),
-                directorName,
-                movie.getLanguage(),
-                average,
-                actors);
     }
 
     private MovieResponse mapToResponseWithRatingAverage(Movie movie, double average) {

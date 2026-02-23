@@ -1,5 +1,6 @@
 package com.example.demo.repositories;
 
+import com.example.demo.dto.movie.MovieDetailWithActorRow;
 import com.example.demo.models.Movie;
 
 import org.springframework.data.domain.Page;
@@ -17,12 +18,20 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
     Optional<Movie> findByTitleAndReleaseYear(String title, int releaseYear);
 
     /**
-     * Fetches a single movie by ID with director and actors loaded (for GET
-     * /movies/{id}).
+     * Single query for GET /movies/{id}: one row per actor (or one row with null actor if none).
+     * Movie + director + COALESCE(avg rating, 0) + actor id/name. One round-trip.
      */
-    @EntityGraph(attributePaths = { "director", "actors" })
-    @Query("SELECT m FROM Movies m WHERE m.id = :id")
-    Optional<Movie> findByIdWithDirectorAndActors(@Param("id") Long id);
+    @Query(value = "SELECT m.id AS id, m.title AS title, m.release_year AS releaseYear, m.language AS language, "
+            + "a_dir.name AS directorName, "
+            + "COALESCE((SELECT AVG(r.score) FROM ratings r WHERE r.movie_id = m.id), 0) AS ratings_avg, "
+            + "a_act.id AS actorId, a_act.name AS actorName "
+            + "FROM movies m "
+            + "LEFT JOIN directors d ON d.artist_id = m.director_id "
+            + "LEFT JOIN artists a_dir ON a_dir.id = d.artist_id "
+            + "LEFT JOIN movie_actors ma ON ma.movie_id = m.id "
+            + "LEFT JOIN artists a_act ON a_act.id = ma.actor_id "
+            + "WHERE m.id = :id", nativeQuery = true)
+    List<MovieDetailWithActorRow> findMovieDetailWithActorsById(@Param("id") Long id);
 
     /**
      * Fetches movies by IDs with ratings and director loaded in one query (avoids
