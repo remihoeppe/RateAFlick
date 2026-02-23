@@ -2,6 +2,7 @@ package com.example.demo.services;
 
 import com.example.demo.dto.common.PageResponse;
 import com.example.demo.dto.movie.CreateMovieRequest;
+import com.example.demo.dto.movie.MovieActorSummary;
 import com.example.demo.dto.movie.MovieResponse;
 import com.example.demo.models.Movie;
 import com.example.demo.repositories.DirectorRepository;
@@ -15,7 +16,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class MovieService {
@@ -48,10 +51,10 @@ public class MovieService {
     }
 
     public MovieResponse findMovieById(Long id) {
-        Movie movie = movieRepo.findById(id).orElseThrow(
+        Movie movie = movieRepo.findByIdWithDirectorAndActors(id).orElseThrow(
                 () -> new EntityNotFoundException(String.format(
                         "Movie with ID: %d, was not found", id)));
-        return mapToResponse(movie);
+        return mapToResponseWithArtists(movie);
     }
 
     public MovieResponse findMovieByIdWithRatings(Long id) {
@@ -71,7 +74,10 @@ public class MovieService {
         return PageResponse.of(movieRepo.findMovieListPage(pageable).map(this::rowToMovieResponse));
     }
 
-    /** Map native query row [id, title, release_year, language, director_name, ratings_avg] to MovieResponse. */
+    /**
+     * Map native query row [id, title, release_year, language, director_name,
+     * ratings_avg] to MovieResponse.
+     */
     private MovieResponse rowToMovieResponse(Object[] row) {
         Long id = ((Number) row[0]).longValue();
         String title = (String) row[1];
@@ -82,7 +88,7 @@ public class MovieService {
         return new MovieResponse(id, title, releaseYear, directorName, language, ratingsAvg);
     }
 
-    // Map Movie to MovieResponse without ratings
+    // Map Movie to MovieResponse without ratings (no actors)
     private MovieResponse mapToResponse(Movie movie) {
         String directorName = movie.getDirector() != null ? movie.getDirector().getName() : null;
         return new MovieResponse(
@@ -91,6 +97,25 @@ public class MovieService {
                 movie.getReleaseYear(),
                 directorName,
                 movie.getLanguage());
+    }
+
+    // Map Movie to MovieResponse with actors (for GET by id)
+    private MovieResponse mapToResponseWithArtists(Movie movie) {
+        String directorName = movie.getDirector() != null ? movie.getDirector().getName() : null;
+        double average = getAverageRating(movie);
+        List<MovieActorSummary> actors = movie.getActors() == null
+                ? Collections.emptyList()
+                : movie.getActors().stream()
+                        .map(a -> new MovieActorSummary(a.getId(), a.getName()))
+                        .collect(Collectors.toList());
+        return new MovieResponse(
+                movie.getId(),
+                movie.getTitle(),
+                movie.getReleaseYear(),
+                directorName,
+                movie.getLanguage(),
+                average,
+                actors);
     }
 
     private MovieResponse mapToResponseWithRatingAverage(Movie movie, double average) {
@@ -103,4 +128,10 @@ public class MovieService {
                 movie.getLanguage(),
                 average);
     }
+
+    private double getAverageRating(Movie movie) {
+        List<Object[]> avgRows = ratingRepo.findAverageScoreByMovieIdIn(List.of(movie.getId()));
+        return avgRows.isEmpty() ? 0.0 : ((Number) avgRows.get(0)[1]).doubleValue();
+    }
+
 }
