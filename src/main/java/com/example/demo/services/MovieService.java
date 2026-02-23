@@ -11,7 +11,6 @@ import com.example.demo.repositories.RatingRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +33,7 @@ public class MovieService {
         this.ratingRepo = ratingRepo;
     }
 
+    // CREATE on POST Request
     @Transactional
     public MovieResponse createMovie(CreateMovieRequest newMovie) {
         logger.debug("Creating movie with title: {}", newMovie.getTitle());
@@ -50,24 +50,27 @@ public class MovieService {
         return mapToResponse(saved);
     }
 
-    public MovieResponse findMovieById(Long id) {
+    // READ on GET Request - returns DTO with artists (director + actors loaded via JOIN FETCH)
+    @Transactional(readOnly = true)
+    public MovieResponse find(Long id) {
+        logger.debug("Finding movie with ID: {}", id);
         Movie movie = movieRepo.findByIdWithDirectorAndActors(id).orElseThrow(
                 () -> new EntityNotFoundException(String.format(
                         "Movie with ID: %d, was not found", id)));
+        logger.debug("Movie.director: {}", movie.getDirector());
         return mapToResponseWithArtists(movie);
     }
 
-    public MovieResponse findMovieByIdWithRatings(Long id) {
-        List<Movie> withDirector = movieRepo.findAllByIdInWithDirector(List.of(id));
-        if (withDirector.isEmpty()) {
-            throw new EntityNotFoundException(String.format("Movie with ID: %d, was not found", id));
-        }
-        Movie movie = withDirector.get(0);
-        List<Object[]> avgRows = ratingRepo.findAverageScoreByMovieIdIn(List.of(id));
-        double avg = avgRows.isEmpty() ? 0.0 : ((Number) avgRows.get(0)[1]).doubleValue();
-        return mapToResponseWithRatingAverage(movie, avg);
+    // READ on GET Request - returns DTO with average rating for a movie
+    public MovieResponse findWithAverageRating(Long id) {
+        Movie movie = movieRepo.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.format(
+                        "Movie with ID: %d, was not found", id)));
+        double average = getAverageRating(movie);
+        return mapToResponseWithRatingAverage(movie, average);
     }
 
+    // READ on GET Request - returns DTO with all movies
     public PageResponse<MovieResponse> findAllMovies(Pageable pageable) {
         logger.debug("Finding all movies with pagination: page={}, size={}",
                 pageable.getPageNumber(), pageable.getPageSize());
@@ -101,6 +104,8 @@ public class MovieService {
 
     // Map Movie to MovieResponse with actors (for GET by id)
     private MovieResponse mapToResponseWithArtists(Movie movie) {
+        logger.debug("Mapping movie with ID: {} to MovieResponse with artists", movie.getId());
+        logger.debug("Movie.director: {}", movie.getDirector());
         String directorName = movie.getDirector() != null ? movie.getDirector().getName() : null;
         double average = getAverageRating(movie);
         List<MovieActorSummary> actors = movie.getActors() == null

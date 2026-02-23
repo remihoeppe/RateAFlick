@@ -17,7 +17,8 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
     Optional<Movie> findByTitleAndReleaseYear(String title, int releaseYear);
 
     /**
-     * Fetches a single movie by ID with director and actors loaded (for GET /movies/{id}).
+     * Fetches a single movie by ID with director and actors loaded (for GET
+     * /movies/{id}).
      */
     @EntityGraph(attributePaths = { "director", "actors" })
     @Query("SELECT m FROM Movies m WHERE m.id = :id")

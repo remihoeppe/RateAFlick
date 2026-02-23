@@ -4,9 +4,10 @@ import jakarta.persistence.*;
 
 /**
  * Base entity for people involved in film production (e.g. Directors, Actors).
- * Uses JOINED inheritance: subclasses have their own tables with a PK that references this table.
+ * Uses JOINED inheritance: subclasses have their own tables with a PK that
+ * references this table.
  */
-@Entity(name = "Artists")
+@Entity
 @Table(name = "artists")
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Artist {

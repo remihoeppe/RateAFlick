@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity(name = "Actors")
+@Entity
 @Table(name = "actors")
 @PrimaryKeyJoinColumn(name = "artist_id")
 public class Actor extends Artist {

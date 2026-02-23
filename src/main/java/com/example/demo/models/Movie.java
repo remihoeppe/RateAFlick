@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import java.util.List;
 import java.util.ArrayList;
 
-@Entity(name = "Movies")
+@Entity
 @Table(name = "movies")
 public class Movie {
     @Id
@@ -16,14 +16,11 @@ public class Movie {
     private String language;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "director_id", nullable = false)
     private Director director;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "movie_actors",
-            joinColumns = @JoinColumn(name = "movie_id"),
-            inverseJoinColumns = @JoinColumn(name = "actor_id")
-    )
+    @JoinTable(name = "movie_actors", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "actor_id"))
     private List<Actor> actors = new ArrayList<>();
 
     @OneToMany(mappedBy = "movie", fetch = FetchType.LAZY)
